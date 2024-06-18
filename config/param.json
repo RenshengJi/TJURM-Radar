@@ -1,0 +1,11 @@
+{
+    "Debug": {
+        "System": {
+            "AutoFire": true,
+            "AutoFireBig": true,
+            "AutoEnemy": true,
+            "AutoRune": true,
+            "AutoCapture": false
+        }
+    }
+}
