@@ -1,0 +1,8 @@
+<launch>
+  <!-- 加载参数至参数服务器，便于各个节点调用! -->
+  <!-- <rosparam file="$(find driver_bridge)/config/param.yaml" command="load" /> -->
+
+  <!-- 启动各个节点 -->
+  <node pkg="driver_bridge" type="driver_bridge_node" name="driver_bridge_node" output="screen"/>
+  
+</launch>

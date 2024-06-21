@@ -1,3 +1,4 @@
 build/
-devel/
+driver_ros/build/
+driver_ros/devel/
 data/

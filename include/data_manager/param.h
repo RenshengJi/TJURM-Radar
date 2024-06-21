@@ -30,7 +30,7 @@ private:
 
 private:
     nlohmann::json params_;
-    std::string default_path_ = "../config/param.json";
+    std::string default_path_ = "/etc/openrm/param.json";
 
 };
 
