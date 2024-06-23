@@ -57,7 +57,7 @@ void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &temp_cloud)
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*temp_cloud, *cloud);
     std::shared_ptr<cv::Mat> cloud_matrix = std::make_shared<cv::Mat>(Cloud2Mat(cloud));
-    memcpy(radar_buffer, cloud_matrix->data, num_ladar * 4);
+    memcpy(radar_buffer, cloud_matrix->data, num_ladar * 4 * 4);
 }
 
 
@@ -92,7 +92,7 @@ int main(int agrc, char *argv[]){
     // radar
     num_ladar = (*param)["Radar"]["Num"];
     std::string radar_buffer_name = (*param)["Radar"]["Name"];
-    radar_buffer = (void *)rm::__shm_alloc__(rm::__gen_hash_key__(radar_buffer_name), num_ladar * 4);
+    radar_buffer = (void *)rm::__shm_alloc__(rm::__gen_hash_key__(radar_buffer_name), num_ladar * 4 * 4);
     memset(radar_buffer, 0, num_ladar * 4);
     ros::Subscriber lidar_sub = nh.subscribe("/livox/lidar", 1, &lidar_callback);
 

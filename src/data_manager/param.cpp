@@ -50,6 +50,6 @@ void Param::from_json(const json& json_info, cv::Mat& mat_info) {
     int rows = json_info["rows"];
     int cols = json_info["cols"];
     int channel = json_info["channel"];
-    std::vector<float> data = json_info.at("data");
+    std::vector<double> data = json_info.at("data");
     mat_info = cv::Mat(data).reshape(channel, rows).clone();
 }
