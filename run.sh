@@ -21,6 +21,10 @@ if [ ! -d "build" ]; then
     mkdir build
 fi
 
+if [ ! -d "config" ]; then 
+    ln -s /etc/openrm ./config
+fi
+
 
 while getopts ":rcg:" opt; do
     case $opt in

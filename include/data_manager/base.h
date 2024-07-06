@@ -12,8 +12,7 @@ namespace Data {
     extern rm::ArmorColor enemy_color;
 
     // 相机的参数记录
-    extern rm::Camera* close_camera;
-    extern rm::Camera* far_camera;
+    extern std::vector<rm::Camera*> camera;
     extern rm::Radar* radar;
 }
 

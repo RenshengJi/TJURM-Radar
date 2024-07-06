@@ -18,22 +18,30 @@ bool init_driver() {
     }
 
 
-    // close_camera
-    Data::close_camera = new rm::Camera();
-    Data::close_camera->width = (*param)["Camera"]["Close"]["Width"];
-    Data::close_camera->height = (*param)["Camera"]["Close"]["Height"];
-    Param::from_json(camlens["Close"]["Intrinsic"], Data::close_camera->intrinsic_matrix);
-    Param::from_json(camlens["Close"]["Distortion"], Data::close_camera->distortion_coeffs);
+    // camera[0] Close
+    Data::camera.push_back(new rm::Camera());
+    Data::camera[0]->camera_id = 0;
+    Data::camera[0]->width = (*param)["Camera"]["Close"]["Width"];
+    Data::camera[0]->height = (*param)["Camera"]["Close"]["Height"];
+    Param::from_json(camlens["Close"]["Intrinsic"], Data::camera[0]->intrinsic_matrix);
+    Param::from_json(camlens["Close"]["Distortion"], Data::camera[0]->distortion_coeffs);
     cv::Mat extrinsic_matrix(4, 4, CV_64F);
     Param::from_json(camlens["Close"]["Extrinsic"], extrinsic_matrix);
-    rm::tf_Mat4d(extrinsic_matrix, Data::close_camera->Trans_pnp2head);
-    Data::close_camera->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Close"]["Name"]), Data::close_camera->height * Data::close_camera->width * 3);
+    rm::tf_Mat4d(extrinsic_matrix, Data::camera[0]->Trans_pnp2head);
+    Data::camera[0]->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Close"]["Name"]), Data::camera[0]->height * Data::camera[0]->width * 3);
+    rm::mallocYoloCameraBuffer(&Data::camera[0]->rgb_host_buffer, &Data::camera[0]->rgb_device_buffer, Data::camera[0]->width, Data::camera[0]->height);
 
-    // far_camera
-    Data::far_camera = new rm::Camera();
-    Data::far_camera->width = (*param)["Camera"]["Far"]["Width"];
-    Data::far_camera->height = (*param)["Camera"]["Far"]["Height"];
-    Data::far_camera->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Far"]["Name"]), Data::far_camera->height * Data::far_camera->width * 3);
+    // camera[1] Far-left
+    Data::camera.push_back(new rm::Camera());
+    Data::camera[0]->camera_id = 1;
+    Data::camera[1]->width = (*param)["Camera"]["Far"]["Width"];
+    Data::camera[1]->height = (*param)["Camera"]["Far"]["Height"];
+    Param::from_json(camlens["Far"]["Intrinsic"], Data::camera[1]->intrinsic_matrix);
+    Param::from_json(camlens["Far"]["Distortion"], Data::camera[1]->distortion_coeffs);
+    Param::from_json(camlens["Far"]["Extrinsic"], extrinsic_matrix);
+    rm::tf_Mat4d(extrinsic_matrix, Data::camera[0]->Trans_pnp2head);
+    Data::camera[1]->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Far"]["Name"]), Data::camera[1]->height * Data::camera[1]->width * 3);
+    rm::mallocYoloCameraBuffer(&Data::camera[1]->rgb_host_buffer, &Data::camera[1]->rgb_device_buffer, Data::camera[1]->width, Data::camera[1]->height);
 
     // radar
     Data::radar = new rm::Radar();
