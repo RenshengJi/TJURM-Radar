@@ -26,13 +26,7 @@ bool init_driver() {
     Param::from_json(camlens["Close"]["Distortion"], Data::close_camera->distortion_coeffs);
     cv::Mat extrinsic_matrix(4, 4, CV_64F);
     Param::from_json(camlens["Close"]["Extrinsic"], extrinsic_matrix);
-    Eigen::Matrix<double, 4, 4>  extrinsic_matrix_eigen = Eigen::Matrix<double, 4, 4>::Identity();
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            extrinsic_matrix_eigen(i, j) = extrinsic_matrix.at<double>(i, j);
-        }
-    }
-    Data::close_camera->Trans_pnp2head = extrinsic_matrix_eigen;
+    rm::tf_Mat4d(extrinsic_matrix, Data::close_camera->Trans_pnp2head);
     Data::close_camera->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Close"]["Name"]), Data::close_camera->height * Data::close_camera->width * 3);
 
     // far_camera

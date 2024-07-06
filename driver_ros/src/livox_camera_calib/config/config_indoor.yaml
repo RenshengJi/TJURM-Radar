@@ -1,0 +1,37 @@
+%YAML:1.0
+
+# Topic name in rosbag
+PointCloudTopic: "/livox/lidar"
+ImageTopic: "/camera/color/image_raw"
+
+ExtrinsicMat: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  # data: [-0.0266384,   -0.999589,   0.0106085,    0.0560641,
+  #        -0.216979,  -0.00457755,  -0.976165,    -0.0769265,
+  #        0.975813,   -0.0283053,    -0.216768,    -0.183484,
+  #        0.0,   0.0,    0.0,    1.0]
+  # data: [0.0811787,   -0.995809,   0.0421294,    -0.144446,
+  #        0.0791621,  -0.0356936,  -0.996224,    -0.579693,
+  #        0.993551,   0.0842071,    0.0759327,    0.0254323,
+  #        0.0,   0.0,    0.0,    1.0]
+  data: [0.0811787,   -0.995809,   0.0421294,    -0.144446,
+         0.0791621,  -0.0356936,  -0.996224,    0,
+         0.993551,   0.0842071,    0.0759327,    0.0254323,
+         0.0,   0.0,    0.0,    1.0]
+# Params for Canny Edge Extraction
+
+Canny.gray_threshold: 10
+Canny.len_threshold: 200
+
+# Params for Voxel Cutting & Plane Fitting & Edge Extraction
+Voxel.size: 0.5
+Voxel.down_sample_size: 0.02
+Plane.min_points_size: 30
+Plane.normal_theta_min: 45
+Plane.normal_theta_max: 135
+Plane.max_size: 8
+Ransac.dis_threshold: 0.02
+Edge.min_dis_threshold: 0.03
+Edge.max_dis_threshold: 0.06

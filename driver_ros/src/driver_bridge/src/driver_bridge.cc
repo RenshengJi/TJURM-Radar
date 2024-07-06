@@ -25,15 +25,16 @@ int height_close, width_close, height_far, width_far, num_ladar;
 
 
 //将点云数据转换为矩阵
-cv::Mat Cloud2Mat(const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)
+cv::Mat Cloud2Mat(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud)
 {
     cv::Mat output_matrix = cv::Mat::zeros(4, (int)cloud->size(), CV_32F);
     for (int i = 0; i < output_matrix.cols; i++) 
     {
-        for (int j = 0; j < 4; j++) 
+        for (int j = 0; j < 3; j++) 
         {
             output_matrix.at<float>(j, i) = cloud->points[i].data[j];
         }
+        output_matrix.at<float>(3, i) = cloud->points[i].intensity;
     }
     return output_matrix;
 }
@@ -54,7 +55,7 @@ void close_image_callback(const sensor_msgs::Image::ConstPtr& msg){
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &temp_cloud)
 {
     printf("lidar receive\n");
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(*temp_cloud, *cloud);
     std::shared_ptr<cv::Mat> cloud_matrix = std::make_shared<cv::Mat>(Cloud2Mat(cloud));
     memcpy(radar_buffer, cloud_matrix->data, num_ladar * 4 * 4);

@@ -1,0 +1,45 @@
+# Data path. adjust them!
+common:
+    image_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/image/far.png"
+    pcd_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far.pcd"
+    result_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/result/extrinsic.txt"
+
+# Camera Parameters. Adjust them!
+camera:
+    # camera_matrix: [
+    #             1.85586430e+03,
+    #             0,
+    #             1.91035285e+03,
+    #             0,
+    #             1.85629612e+03,
+    #             1.10225943e+03,
+    #             0,
+    #             0,
+    #             1.0000
+    #         ]
+    # dist_coeffs: [0.11283563,
+    #             -0.12516204,
+    #             0.00080002,
+    #             -0.00095754,
+    #             0.07697566]
+    camera_matrix: [
+                1.03982137e+04
+                0,
+                1.98947054e+03,
+                0,
+                1.03922491e+04,
+                1.19259914e+03,
+                0,
+                0,
+                1.0000
+            ]
+    dist_coeffs: [-2.57520435e-01,
+                -1.11535093e+00,
+                1.40156413e-03,
+                -4.19930663e-04,
+                2.27832120e+00]
+
+# Calibration Parameters.!
+calib:
+    calib_config_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/config/config_indoor.yaml"
+    use_rough_calib: true # set true if your initial_extrinsic is bad

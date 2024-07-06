@@ -1,4 +1,7 @@
 build/
 driver_ros/build/
 driver_ros/devel/
+driver_ros/src/livox_camera_calib/image/
+driver_ros/src/livox_camera_calib/pcd/
+driver_ros/src/livox_camera_calib/pics/
 data/
