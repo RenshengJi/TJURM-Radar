@@ -42,3 +42,57 @@ cv::Mat PointCloud2Depth(rm::Radar* radar, rm::Camera* camera){
 }
 
 
+bool extrinsic_calib(){
+    auto param = Param::get_instance();
+    
+    
+    if(!Data::extrinsic->is_valid){
+        return false;
+    }
+    Data::radar2place = Eigen::Matrix<double, 4, 4>::Identity();
+
+    // TODO: 目前选择前场相机进行外参标定
+    // 1. 获取世界坐标（从配置文件里读取）
+    std::vector<cv::Point3d> zed_cali(4);
+    zed_cali[0].x = (*param)["PlacePoint"]["1x"];
+    zed_cali[0].y = (*param)["PlacePoint"]["1y"];
+    zed_cali[0].z = (*param)["PlacePoint"]["1z"];
+    zed_cali[1].x = (*param)["PlacePoint"]["2x"];
+    zed_cali[1].y = (*param)["PlacePoint"]["2y"];
+    zed_cali[1].z = (*param)["PlacePoint"]["2z"];
+    zed_cali[2].x = (*param)["PlacePoint"]["3x"];
+    zed_cali[2].y = (*param)["PlacePoint"]["3y"];
+    zed_cali[2].z = (*param)["PlacePoint"]["3z"];
+    zed_cali[3].x = (*param)["PlacePoint"]["4x"];
+    zed_cali[3].y = (*param)["PlacePoint"]["4y"];
+    zed_cali[3].z = (*param)["PlacePoint"]["4z"];
+    
+
+    // 2. 获取相机坐标
+    std::vector<cv::Point2d> radar_cali(4);
+    for(int i = 0; i < 4; i++){
+        radar_cali[i].x = Data::extrinsic->image_zed_calib[i].x * Data::camera[0]->width;
+        radar_cali[i].y = Data::extrinsic->image_zed_calib[i].y * Data::camera[0]->height;
+    }
+
+    // 3. 使用solvepnp求解相机与场地坐标系的外参
+    cv::Mat rvec, tvec;
+    cv::solvePnP(zed_cali, radar_cali, Data::camera[0]->intrinsic_matrix, Data::camera[0]->distortion_coeffs, rvec, tvec, 0, cv::SOLVEPNP_P3P);
+
+    // 4. 将rvec和tvec转换为4x4的矩阵place2camera
+    Eigen::Matrix<double, 4, 4> place2camera = Eigen::Matrix<double, 4, 4>::Identity();
+    cv::Mat rmat;
+    cv::Rodrigues(rvec, rmat);
+    Eigen::Matrix<double, 3, 3> rotate;
+    rm::tf_Mat3d(rmat, rotate);
+    Eigen::Matrix<double, 4, 1> pose;
+    rm::tf_Vec4d(tvec, pose);
+    rm::tf_rt2trans(pose, rotate, place2camera);
+
+    // 5. 得到radar2place
+    Data::radar2place = place2camera.inverse() * Data::camera[0]->Trans_pnp2head;
+
+    return true;
+}
+
+

@@ -1,0 +1,5 @@
+<launch>
+  <rosparam command="load" file="$(find displayer_qt5)/yaml/displayer_qt5.yaml" />
+  <rosparam command="load" file="$(find radar_msgs)/yaml/radar.yaml" />
+  <node name="game_state_publisher" pkg="game_state_publisher" type="game_state_publisher_node" respawn="true"  output = "screen"/>
+</launch>

@@ -15,11 +15,15 @@
 // openrm
 #include <structure/shm.hpp>
 #include <structure/swapbuffer.hpp>
+#include <structure/radar.hpp>
 
 #include "data_manager/param.h"
 
+#include <radar_msgs/points.h>
+#include <radar_msgs/point.h>
 
-void *close_buffer, *far_buffer, *radar_buffer;
+
+void *close_buffer, *far_buffer, *radar_buffer, *extrinsic_buffer;
 
 int height_close, width_close, height_far, width_far, num_ladar;
 
@@ -61,6 +65,17 @@ void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &temp_cloud)
     memcpy(radar_buffer, cloud_matrix->data, num_ladar * 4 * 4);
 }
 
+void extrinsic_callback(const radar_msgs::points &points){
+    printf("extrinsic receive\n");
+    rm::RadarData *extrinsic = (rm::RadarData *)extrinsic_buffer;
+    extrinsic->is_valid = true;
+    for(int i = 0; i < 4; i++){
+        extrinsic->image_zed_calib[i].x = points.data[i].x;
+        extrinsic->image_zed_calib[i].y = points.data[i].y;
+    }
+}
+
+
 
 int main(int agrc, char *argv[]){
 
@@ -96,6 +111,15 @@ int main(int agrc, char *argv[]){
     radar_buffer = (void *)rm::__shm_alloc__(rm::__gen_hash_key__(radar_buffer_name), num_ladar * 4 * 4);
     memset(radar_buffer, 0, num_ladar * 4);
     ros::Subscriber lidar_sub = nh.subscribe("/livox/lidar", 1, &lidar_callback);
+
+
+    // 外参标定结果
+    std::string extrinsic_name = (*param)["Extrinsic"]["Name"];
+    extrinsic_buffer = (void *)rm::__shm_alloc__(rm::__gen_hash_key__(extrinsic_name), sizeof(rm::RadarData));
+    memset(extrinsic_buffer, 0, sizeof(rm::RadarData));
+    ros::Subscriber extrinsic_sub = nh.subscribe("/sensor_close/calibration", 1, &extrinsic_callback);
+
+
 
     ros::spin();
 

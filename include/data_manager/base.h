@@ -17,6 +17,10 @@ namespace Data {
     
     // 点云转换得到的深度图(便于信息融合)
     extern std::vector<cv::Mat> radar_depth;
+
+    // 外参标定结果
+    extern Eigen::Matrix<double, 4, 4> radar2place;  
+    extern rm::RadarData* extrinsic;
 }
 
 bool init_driver();

@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/image">
+        <file>images/Icon.ico</file>
+    </qresource>
+    <qresource prefix="/qss">
+        <file>qss/progressBarBlue.qss</file>
+        <file>qss/progressBarRed.qss</file>
+    </qresource>
+</RCC>

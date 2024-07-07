@@ -1,0 +1,35 @@
+uint16 red_1_robot_HP
+uint16 red_2_robot_HP
+uint16 red_3_robot_HP
+uint16 red_4_robot_HP
+uint16 red_5_robot_HP
+uint16 red_7_robot_HP
+uint16 red_outpose_HP
+uint16 red_base_HP
+uint16 blue_1_robot_HP
+uint16 blue_2_robot_HP
+uint16 blue_3_robot_HP
+uint16 blue_4_robot_HP
+uint16 blue_5_robot_HP
+uint16 blue_7_robot_HP
+uint16 blue_outpose_HP
+uint16 blue_base_HP
+uint8 game_type
+uint8 game_progress
+uint16 stage_remain_time
+uint8 winner
+bool if_supply_projectile_one_occupied
+bool if_supply_projectile_two_occupied
+bool if_supply_projectile_three_occupied
+bool if_wind_mill_hit_place_occupied
+bool if_wind_mill_big_lighted
+bool if_wind_mill_small_lighted
+bool if_RB2_occupied
+bool if_RB3_occupied
+bool if_RB4_occupied
+bool if_base_protected
+bool if_outpose_alive
+uint8 dart_remaining_time
+
+
+

@@ -53,5 +53,9 @@ bool init_driver() {
         Data::radar_depth.push_back(cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_32FC1));
     }
 
+    // extrinsic
+    std::string extrinsic_name = (*param)["Extrinsic"]["Name"];
+    Data::extrinsic = (rm::RadarData *)rm::__shm_alloc__(rm::__gen_hash_key__(extrinsic_name), sizeof(rm::RadarData));
+
     return true;
 }

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package>
+  <name>displayer_qt5</name>
+  <version>0.1.0</version>
+  <description>
+
+     displayer_qt5
+
+  </description>
+  <maintainer email="dovejh@gmail.com">dovejh</maintainer>
+  <author>dovejh</author>
+  <license>BSD</license>
+  <!-- <url type="bugtracker">https://github.com/stonier/qt_ros/issues</url> -->
+  <!-- <url type="repository">https://github.com/stonier/qt_ros</url> -->
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>qt_build</build_depend>
+  <build_depend>opencv2</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>libqt4-dev</build_depend>
+  <run_depend>qt_build</run_depend>
+  <run_depend>opencv2</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>libqt4-dev</run_depend>
+  <build_depend>cv_bridge</build_depend>
+  <run_depend>cv_bridge</run_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>std_msgs</run_depend>
+  <build_depend>image_transport</build_depend>
+  <run_depend>image_transport</run_depend>
+
+ 
+</package>

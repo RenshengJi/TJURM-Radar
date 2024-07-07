@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   cv_bridge
   sensor_msgs
+  radar_msgs
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -43,6 +44,11 @@ include_directories(
 # 2.添加可执行文件
 add_executable(driver_bridge_node src/driver_bridge.cc)
 
+# 5. 添加依赖项
+add_dependencies(driver_bridge_node radar_msgs_generate_messages)
+add_dependencies(driver_bridge_node ${PROJECT_NAME}_generate_messages_cpp)
+
+
 # 3.添加构建子目录
 add_subdirectory(src/data_manager)
 
@@ -55,8 +61,6 @@ target_link_libraries(driver_bridge_node
   data_manager
 )
 
-# 5. 添加依赖项
-add_dependencies(driver_bridge_node ${PROJECT_NAME}_generate_messages_cpp)
 
 
 

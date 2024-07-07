@@ -12,6 +12,10 @@ rm::Radar* Data::radar;
 // 点云转换得到的深度图(便于信息融合)
 std::vector<cv::Mat> Data::radar_depth;
 
+// 外参标定结果
+rm::RadarData* Data::extrinsic;
+Eigen::Matrix<double, 4, 4> Data::radar2place;
+
 
 
 

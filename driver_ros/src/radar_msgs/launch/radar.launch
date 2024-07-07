@@ -1,0 +1,5 @@
+<launch>
+  <rosparam command="load" file="$(find radar_msgs)/yaml/radar.yaml" />
+  <rosparam command="load" file="$(find displayer_qt5)/yaml/displayer_qt5.yaml" />
+  <node name="displayer_qt5" pkg="displayer_qt5" type="displayer_qt5" respawn="true"/>
+</launch>

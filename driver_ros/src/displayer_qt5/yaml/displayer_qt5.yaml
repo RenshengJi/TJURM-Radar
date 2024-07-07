@@ -1,0 +1,94 @@
+camera:
+  list:
+    # realsense:
+    #   topic: "/"
+      #topic: "/camera/color/image_raw"
+    # farCam:    # 可添加多个同时显示的相机(此处自定义相机名称，注意不能重复)
+    #   topic: "/rgb/image_raw"                           # 相机图像topic
+    #   shapeTopic: "/sensor_far/shape"              # 发送形状的topic
+    #   calibrationTopic: "/zed_cail"  # 返回标定信息的topic
+    #   calibrationDefault: # 在前端打开标定时的默认位置，注意必须与实际需要的点数相同
+    #     point1:
+    #       x: 0.247
+    #       y: 0.070
+    #     point2:
+    #       x: 0.541
+    #       y: 0.411
+    #     point3:
+    #       x: 0.632
+    #       y: 0.411
+    #     point4:
+    #       x: 0.614
+    #       y: 0.016
+    # closeCam: # 可添加多个同时显示的相机(此处自定义相机名称，注意不能重复)
+    #   topic: "/"                           # 相机图像topic
+    #   shapeTopic: "/sensor_close/shape"              # 发送形状的topic
+    #   calibrationTopic: "/sensor_close/calibration"  # 返回标定信息的topic
+    #   calibrationDefault:
+    #     point1:
+    #       x: 0.500
+    #       y: 0.073
+    #     point2:
+    #       x: 0.448
+    #       y: 0.281
+    #     point3:
+    #       x: 0.493
+    #       y: 0.281
+    #     point4:
+    #       x: 0.843
+    #       y: 0.189
+
+    closeCam:    # 可添加多个同时显示的相机(此处自定义相机名称，注意不能重复)
+      topic: "/hikrobot_camera/rgb"                           # 相机图像topic
+      # shapeTopic: "/sensor_far/shape"              # 发送形状的topic
+      calibrationTopic: "/sensor_far/calibration"  # 返回标定信息的topic
+      calibrationDefault: # 在前端打开标定时的默认位置，注意必须与实际需要的点数相同
+        point1:
+          x: 0.247
+          y: 0.070
+        point2:
+          x: 0.541
+          y: 0.411
+        point3:
+          x: 0.632
+          y: 0.411
+        point4:
+          x: 0.614
+          y: 0.016
+    farCam:    # 可添加多个同时显示的相机(此处自定义相机名称，注意不能重复)
+      topic: "/rgb/image_raw"                           # 相机图像topic
+      shapeTopic: "/sensor_close/shape"              # 发送形状的topic
+      # calibrationTopic: "/zed_cail"  # 返回标定信息的topic
+      calibrationTopic: "/sensor_close/calibration"  # 返回标定信息的topic
+      calibrationDefault: # 在前端打开标定时的默认位置，注意必须与实际需要的点数相同
+        point1:
+          x: 0.247
+          y: 0.070
+        point2:
+          x: 0.541
+          y: 0.411
+        point3:
+          x: 0.632
+          y: 0.411
+        point4:
+          x: 0.614
+          y: 0.016
+calibrate:
+  rate: 3             # 标定时放大的倍数(1-5)
+  # rawImageWidth: 1280
+  # rawImageHeight: 1024
+  rawImageWidth: 720
+  rawImageHeight: 540
+  
+judgeSystem:
+  gameStateTopic: "/game_state"
+  supplyProjectileActionTopic: "/supply_projectile_action"
+  refereeWarningTopic: "/referee_warning"
+minimap:
+  subscribeTopic: "/world_point"
+game:
+  # secondWindowTopic: "/sensor_far/image_raw"
+  secondWindowTopic: "/rgb/image_raw"
+  record:
+    ifRecord: False
+    recordPath: "/home/dovejh/project/radar_station/recorder.avi"
