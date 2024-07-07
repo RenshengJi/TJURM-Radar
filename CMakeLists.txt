@@ -38,6 +38,7 @@ include_directories(${CMAKE_SOURCE_DIR}/libs/json/single_include/nlohmann)
 # 添加构建子目录
 add_subdirectory(src/data_manager)
 add_subdirectory(src/model)
+add_subdirectory(src/fuse)
 
 # 添加可执行文件
 add_executable(TJURM-Radar src/main.cpp)
@@ -46,6 +47,7 @@ add_executable(TJURM-Radar src/main.cpp)
 target_link_libraries(TJURM-Radar
     data_manager
     model
+    fuse
 )
 
 # install(TARGETS TJURM-Radar

@@ -5,10 +5,12 @@ rm::ArmorColor Data::self_color;
 rm::ArmorColor Data::enemy_color;
 
 
-// 相机的参数记录
+// 设备
 std::vector<rm::Camera*> Data::camera;
 rm::Radar* Data::radar;
 
+// 点云转换得到的深度图(便于信息融合)
+std::vector<cv::Mat> Data::radar_depth;
 
 
 

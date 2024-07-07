@@ -47,7 +47,11 @@ bool init_driver() {
     Data::radar = new rm::Radar();
     Data::radar->num_point = (*param)["Radar"]["Num"];
     Data::radar->point_cloud_buffer = (float *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Radar"]["Name"]), Data::radar->num_point * 4 * 4);
-    
+
+    // radar_depth
+    for(int i = 0; i < Data::camera.size(); i++){
+        Data::radar_depth.push_back(cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_32FC1));
+    }
 
     return true;
 }

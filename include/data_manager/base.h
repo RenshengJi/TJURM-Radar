@@ -14,6 +14,9 @@ namespace Data {
     // 相机的参数记录
     extern std::vector<rm::Camera*> camera;
     extern rm::Radar* radar;
+    
+    // 点云转换得到的深度图(便于信息融合)
+    extern std::vector<cv::Mat> radar_depth;
 }
 
 bool init_driver();
