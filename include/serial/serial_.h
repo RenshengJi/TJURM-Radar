@@ -8,5 +8,7 @@
 
 
 
+void serial_port_init();
+void serial_port_recv();
 
 #endif

@@ -19,6 +19,9 @@ Eigen::Matrix<double, 4, 4> Data::radar2place;
 // 敌方6辆车的位置
 std::vector<cv::Point3f> Data::enemy_pos;
 
+// 串口
+serial::Serial Data::ser;
+
 
 
 

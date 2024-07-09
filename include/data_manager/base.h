@@ -5,6 +5,7 @@
 #include <openrm.h>
 #include <Eigen/Dense>
 #include <cstdint>
+#include <serial/serial.h>
 
 namespace Data {
     // 颜色
@@ -24,6 +25,9 @@ namespace Data {
 
     // 敌方6辆车的位置
     extern std::vector<cv::Point3f> enemy_pos;
+
+    // 串口
+    extern serial::Serial ser;
 }
 
 bool init_driver();
