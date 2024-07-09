@@ -77,7 +77,7 @@ bool extrinsic_calib(){
 
     // 3. 使用solvepnp求解相机与场地坐标系的外参
     cv::Mat rvec, tvec;
-    cv::solvePnP(zed_cali, radar_cali, Data::camera[0]->intrinsic_matrix, Data::camera[0]->distortion_coeffs, rvec, tvec, 0, cv::SOLVEPNP_P3P);
+    cv::solvePnP(zed_cali, radar_cali, Data::camera[0]->intrinsic_matrix, Data::camera[0]->distortion_coeffs, rvec, tvec, 0, cv::SOLVEPNP_ITERATIVE);
 
     // 4. 将rvec和tvec转换为4x4的矩阵place2camera
     Eigen::Matrix<double, 4, 4> place2camera = Eigen::Matrix<double, 4, 4>::Identity();
@@ -91,6 +91,9 @@ bool extrinsic_calib(){
 
     // 5. 得到radar2place
     Data::radar2place = place2camera.inverse() * Data::camera[0]->Trans_pnp2head;
+
+    // 输出tvec 
+    std::cout << "tvec: " << tvec << std::endl;
 
     return true;
 }

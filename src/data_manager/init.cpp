@@ -57,5 +57,7 @@ bool init_driver() {
     std::string extrinsic_name = (*param)["Extrinsic"]["Name"];
     Data::extrinsic = (rm::RadarData *)rm::__shm_alloc__(rm::__gen_hash_key__(extrinsic_name), sizeof(rm::RadarData));
 
+    Data::enemy_pos = std::vector<cv::Point3f>(6, cv::Point3f(0, 0, 0));
+
     return true;
 }

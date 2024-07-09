@@ -19,6 +19,7 @@ include_directories(/usr/local/cuda/include)
 find_package(OpenRM REQUIRED)
 include_directories(${OpenRM_INCLUDE_DIRS})
 
+
 # OpenCV
 find_package(OpenCV 4.5.4 REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -31,14 +32,19 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 find_package(Ceres REQUIRED)
 include_directories(${CERES_INCLUDE_DIRS})
 
+set(serial_DIR /tmp/usr/local/share/serial/cmake)
+find_package(serial REQUIRED)
+
 # 添加项目头文件
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/libs/json/single_include/nlohmann)
+include_directories(/tmp/usr/local/include/)
 
 # 添加构建子目录
 add_subdirectory(src/data_manager)
 add_subdirectory(src/model)
 add_subdirectory(src/fuse)
+add_subdirectory(src/serial)
 
 # 添加可执行文件
 add_executable(TJURM-Radar src/main.cpp)
@@ -48,6 +54,7 @@ target_link_libraries(TJURM-Radar
     data_manager
     model
     fuse
+    Serial
 )
 
 # install(TARGETS TJURM-Radar

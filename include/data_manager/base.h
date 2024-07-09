@@ -21,6 +21,9 @@ namespace Data {
     // 外参标定结果
     extern Eigen::Matrix<double, 4, 4> radar2place;  
     extern rm::RadarData* extrinsic;
+
+    // 敌方6辆车的位置
+    extern std::vector<cv::Point3f> enemy_pos;
 }
 
 bool init_driver();
