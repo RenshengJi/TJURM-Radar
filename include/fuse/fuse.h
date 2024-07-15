@@ -11,5 +11,7 @@ cv::Mat PointCloud2Depth(rm::Radar* radar, rm::Camera* camera);
 
 bool extrinsic_calib();
 
+void init_depth();
+
 
 #endif

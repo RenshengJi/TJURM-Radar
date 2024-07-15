@@ -358,7 +358,7 @@ void Calibration::edgeDetector(
   cv::GaussianBlur(src_img, src_img, cv::Size(gaussian_size, gaussian_size), 0,
                    0);
   cv::Mat canny_result = cv::Mat::zeros(height_, width_, CV_8UC1);
-  cv::Canny(src_img, canny_result, canny_threshold, canny_threshold * 3, 3,
+  cv::Canny(src_img, canny_result, canny_threshold, canny_threshold * 3, 5,
             true);
   std::vector<std::vector<cv::Point>> contours;
   std::vector<cv::Vec4i> hierarchy;

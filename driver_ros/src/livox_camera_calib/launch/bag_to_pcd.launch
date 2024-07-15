@@ -5,8 +5,8 @@
     name="bag_to_pcd"
     output="screen"
   />
-   <param name="bag_file" type="string" value="/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far.bag"/>
+   <param name="bag_file" type="string" value="/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far4.bag"/>
    <param name="lidar_topic" type="string" value="/livox/lidar"/>
-   <param name="pcd_file" type="string" value="/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far.pcd"/>
+   <param name="pcd_file" type="string" value="/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far4.pcd"/>
    <param name="is_custom_msg" type="bool" value="false"/>
 </launch>

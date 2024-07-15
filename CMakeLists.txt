@@ -32,6 +32,10 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 find_package(Ceres REQUIRED)
 include_directories(${CERES_INCLUDE_DIRS})
 
+# PCL
+find_package(PCL REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+
 set(serial_DIR /tmp/usr/local/share/serial/cmake)
 find_package(serial REQUIRED)
 

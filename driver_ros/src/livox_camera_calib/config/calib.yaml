@@ -1,7 +1,7 @@
 # Data path. adjust them!
 common:
-    image_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/image/far.png"
-    pcd_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far.pcd"
+    image_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/image/far3.bmp"
+    pcd_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far3.pcd"
     result_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/result/extrinsic.txt"
 
 # Camera Parameters. Adjust them!
@@ -23,7 +23,7 @@ camera:
     #             -0.00095754,
     #             0.07697566]
     camera_matrix: [
-                1.03982137e+04
+                1.03982137e+04,
                 0,
                 1.98947054e+03,
                 0,

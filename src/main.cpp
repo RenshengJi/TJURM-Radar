@@ -15,18 +15,20 @@ int main(int argc, char* argv[]) {
         if(init_driver()) break;
     }
 
-    // // 等待外参标定结果
-    // while(true){
-    //     if(extrinsic_calib()) break;
-    // }
+    // 等待外参标定结果
+    while(true){
+        if(extrinsic_calib()) break;
+    }
 
     // 初始化模型
     auto rgb_model = RGB_MODEL::get_instance();
 
     // 初始化串口，建立接收数据线程并进入
-    serial_port_init();
-    std::thread serial_thread(serial_port_recv);
+    // serial_port_init();
+    // std::thread serial_thread(serial_port_recv);
 
+    // 初始化深度图(需要外参支持)
+    init_depth();
 
 
     // 主循环
@@ -43,6 +45,9 @@ int main(int argc, char* argv[]) {
         for(int i = 0; i < Data::camera.size(); i++){
             Data::radar_depth[i] = PointCloud2Depth(Data::radar, Data::camera[i]);
         }
+
+        
+
 
         // // 获取装甲板在场地坐标系下的3D坐标
         // for(auto& yolo : *yolo_list){

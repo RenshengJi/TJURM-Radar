@@ -11,6 +11,7 @@ rm::Radar* Data::radar;
 
 // 点云转换得到的深度图(便于信息融合)
 std::vector<cv::Mat> Data::radar_depth;
+std::vector<cv::Mat> Data::depth;
 
 // 外参标定结果
 rm::RadarData* Data::extrinsic;
@@ -21,6 +22,7 @@ std::vector<cv::Point3f> Data::enemy_pos;
 
 // 串口
 serial::Serial Data::ser;
+
 
 
 

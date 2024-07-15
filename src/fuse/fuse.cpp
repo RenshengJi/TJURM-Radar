@@ -5,6 +5,13 @@
 #include <unistd.h>
 
 
+// pcl库
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+
+
+
 
 
 cv::Mat PointCloud2Depth(rm::Radar* radar, rm::Camera* camera){
@@ -93,9 +100,54 @@ bool extrinsic_calib(){
     Data::radar2place = place2camera.inverse() * Data::camera[0]->Trans_pnp2head;
 
     // 输出tvec 
-    std::cout << "tvec: " << tvec << std::endl;
+    std::cout << "x: " << Data::radar2place(0, 3) << " y: " << Data::radar2place(1, 3) << " z: " << Data::radar2place(2, 3) << std::endl;
 
     return true;
 }
 
 
+
+void init_depth(){
+    // 读取pcl文件，拿到PointCloud格式的点云数据
+    auto param = Param::get_instance();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    std::string pcd_path = (*param)["PointCloud"]["Dir"];
+    pcl::io::loadPCDFile(pcd_path, *cloud);
+
+
+    // 根据雷达站和场地的外参以及雷达站和对应相机的外参，将点云转换到相机坐标系下
+    // 1. 先将点云数据转换为Matrix格式
+    Eigen::Matrix<double, 4, Eigen::Dynamic> cloud_matrix = Eigen::Matrix<double, 4, Eigen::Dynamic>::Zero(4, cloud->width);
+    for(int i = 0; i < cloud->width; i++){
+        cloud_matrix(0, i) = cloud->points[i].x;
+        cloud_matrix(1, i) = cloud->points[i].y;
+        cloud_matrix(2, i) = cloud->points[i].z;
+        cloud_matrix(3, i) = 1;
+    }
+
+    // 2. 将点云经过雷达站的外参从场地坐标系转换到雷达站坐标系下
+    Eigen::Matrix<double, 4, Eigen::Dynamic> cloud_matrix_in_radar = Data::radar2place.inverse() * cloud_matrix;
+
+    // 3. 将点云投影到雷达站的图像坐标系下，根据各相机的外参，将点云转换到相机坐标系下
+    for(int i = 0; i < Data::camera.size(); i++){
+        Eigen::Matrix<double, 4, Eigen::Dynamic> cloud_matrix_in_camera = Data::camera[i]->Trans_pnp2head * cloud_matrix_in_radar;
+        Eigen::Matrix<double, 3, 3> intrinsic_matrix;
+        rm::tf_Mat3d(Data::camera[i]->intrinsic_matrix, intrinsic_matrix);
+        Eigen::Matrix<double, 3, Eigen::Dynamic> cloud_matrix_in_camera_3d = intrinsic_matrix * cloud_matrix_in_camera.topRows(3);
+
+        // 4. 将点云投影到图像坐标系下，得到深度图
+        cv::Mat depth_image = cv::Mat::zeros(Data::camera[i]->height, Data::camera[i]->width, CV_32FC1);
+        for(int j = 0; j < cloud->width; j++){
+            int x = cloud_matrix_in_camera_3d(0, j) / cloud_matrix_in_camera_3d(2, j);
+            int y = cloud_matrix_in_camera_3d(1, j) / cloud_matrix_in_camera_3d(2, j);
+            if(x >= 0 && x < Data::camera[i]->width && y >= 0 && y < Data::camera[i]->height){
+                float depth = cloud_matrix_in_camera_3d(2, j);
+                depth_image.at<float>(y, x) = depth;
+            }
+        }
+    }
+
+
+
+
+}

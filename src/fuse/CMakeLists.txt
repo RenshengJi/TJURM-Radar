@@ -14,4 +14,5 @@ target_link_libraries(fuse
         ${OpenCV_LIBS}
         ${OpenRM_LIBS}
         ${JSON_LIBS}
+        ${PCL_LIBRARIES}
 )

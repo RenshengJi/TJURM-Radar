@@ -9,6 +9,9 @@ add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
+set(cv_bridge_DIR /usr/local/cv_bridge4.5.4/share/cv_bridge/cmake)
+
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   pcl_conversions
@@ -22,7 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL REQUIRED)
-find_package(OpenCV)
+find_package(OpenCV 4.5.4 REQUIRED)
 find_package(Threads)
 find_package(Ceres REQUIRED)
 
