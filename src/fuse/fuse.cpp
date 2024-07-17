@@ -135,19 +135,45 @@ void init_depth(){
         rm::tf_Mat3d(Data::camera[i]->intrinsic_matrix, intrinsic_matrix);
         Eigen::Matrix<double, 3, Eigen::Dynamic> cloud_matrix_in_camera_3d = intrinsic_matrix * cloud_matrix_in_camera.topRows(3);
 
-        // 4. 将点云投影到图像坐标系下，得到深度图
-        cv::Mat depth_image = cv::Mat::zeros(Data::camera[i]->height, Data::camera[i]->width, CV_32FC1);
+        // 4. 将点云投影到图像坐标系下，得到深度图  TODO: 采样bug,等待解决
+        cv::Mat depth_image = cv::Mat::zeros(Data::camera[i]->height, Data::camera[i]->width, CV_64FC3);
         for(int j = 0; j < cloud->width; j++){
             int x = cloud_matrix_in_camera_3d(0, j) / cloud_matrix_in_camera_3d(2, j);
             int y = cloud_matrix_in_camera_3d(1, j) / cloud_matrix_in_camera_3d(2, j);
             if(x >= 0 && x < Data::camera[i]->width && y >= 0 && y < Data::camera[i]->height){
-                float depth = cloud_matrix_in_camera_3d(2, j);
-                depth_image.at<float>(y, x) = depth;
+                double depth = cloud_matrix_in_camera_3d(2, j)/1000.0;
+                if(depth < 1) continue;
+                if(depth > 30) depth = 30;
+                cv::Vec3d pixel = cv::Vec3d(depth / 30, 0, (30 - depth) / 30);
+                if(depth_image.at<cv::Vec3d>(y, x).val[0] == 0 || depth_image.at<cv::Vec3d>(y, x).val[0] > pixel.val[0]){
+                    depth_image.at<cv::Vec3d>(y, x) = pixel;
+                }
             }
         }
+        Data::depth.push_back(depth_image);
+        
+        
+
+        // TODO: 深度图+原图叠加显示
+        // cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image_buffer);
+
+        // // 对image去畸变
+        // cv::Mat undistort_image;
+        // cv::undistort(image, undistort_image, Data::camera[i]->intrinsic_matrix, Data::camera[i]->distortion_coeffs);
+        // image = undistort_image;
+
+        // // 叠加depth_image和image
+        // for(int i = 0; i < depth_image.rows; i++){
+        //     for(int j = 0; j < depth_image.cols; j++){
+        //         cv::Vec3d pixel = depth_image.at<cv::Vec3d>(i, j);
+        //         if(pixel.val[0] != 0){
+        //             image.at<cv::Vec3b>(i, j) = cv::Vec3b(255*pixel.val[0], 0, 255*pixel.val[2]) * 0.5 + image.at<cv::Vec3b>(i, j) * 0.5;
+        //         }
+        //     }
+        // }
+        // cv::imshow("image"+std::to_string(i), image);
     }
-
-
+    // cv::waitKey(0);
 
 
 }
