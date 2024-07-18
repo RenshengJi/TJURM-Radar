@@ -46,8 +46,6 @@ int main(int argc, char* argv[]) {
             Data::radar_depth[i] = PointCloud2Depth(Data::radar, Data::camera[i]);
         }
 
-    
-
         // 获取装甲板在场地坐标系下的3D坐标
         for(auto& yolo : *yolo_list){
 
@@ -81,16 +79,16 @@ int main(int argc, char* argv[]) {
                     // 单目法深度获取
                     if(Data::depth[camera_id].at<double>(j, i) != 0){
                         // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
-                        double z = Data::depth[camera_id].at<double>(j, i);
+                        double z = Data::depth[camera_id].at<double>(j, i) * 1000;
                         cv::Mat point_pixel = (cv::Mat_<double>(3, 1) << i*z, j*z, z);
                         cv::Mat camera_cor_mat = Data::camera[camera_id]->intrinsic_matrix.inv() * point_pixel;
-                        Eigen::Vector4d camera_cor(camera_cor_mat.at<float>(0), camera_cor_mat.at<float>(1), camera_cor_mat.at<float>(2), 1);
+                        Eigen::Vector4d camera_cor(camera_cor_mat.at<double>(0), camera_cor_mat.at<double>(1), camera_cor_mat.at<double>(2), 1);
 
                         // 2. 计算该点在云台坐标系下的坐标（利用相机坐标系下的坐标，以及联合标定矩阵）
                         Eigen::Vector4d head_cor = Data::camera[camera_id]->Trans_pnp2head.inverse() * camera_cor;
 
                         // 3. 计算该点在场地坐标系下的坐标（利用云台坐标系下的坐标，以及外参矩阵）
-                        Eigen::Vector4d world_cor = Data::radar2place.inverse() * head_cor;
+                        Eigen::Vector4d world_cor = Data::radar2place * head_cor;
 
                         armor_3d.push_back(cv::Point3f(world_cor(0), world_cor(1), world_cor(2)));
                     }
@@ -111,10 +109,16 @@ int main(int argc, char* argv[]) {
             armor_3d_mean.z /= armor_3d.size();
 
             std::cout << "armor_3d_mean: " << armor_3d_mean << std::endl;
+
+            // 将检测到的点绘制到小地图上
+            cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/30, Data::map.rows - armor_3d_mean.y/30);
+            cv::circle(Data::map, armor_2d, 10, cv::Scalar(0, 0, 255), -1);
         }
 
-
-        // serial
+    
+        
+        cv::imshow("map", Data::map);
+        cv::waitKey(1);
 
 
         

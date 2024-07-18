@@ -59,5 +59,10 @@ bool init_driver() {
 
     Data::enemy_pos = std::vector<cv::Point3f>(6, cv::Point3f(0, 0, 0));
 
+    // 小地图map
+    std::string map_dir = (*param)["Map"]["Dir"];
+    Data::map = cv::imread(map_dir);
+    cv::resize(Data::map, Data::map, cv::Size(Data::map.cols/3, Data::map.rows/3));
+
     return true;
 }

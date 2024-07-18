@@ -23,6 +23,9 @@ std::vector<cv::Point3f> Data::enemy_pos;
 // 串口
 serial::Serial Data::ser;
 
+// 小地图map
+cv::Mat Data::map;
+
 
 
 

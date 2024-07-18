@@ -29,6 +29,9 @@ namespace Data {
 
     // 串口
     extern serial::Serial ser;
+
+    // 小地图map
+    extern cv::Mat map;
 }
 
 bool init_driver();
