@@ -27,6 +27,11 @@ void *close_buffer, *far_buffer, *radar_buffer, *extrinsic_buffer;
 
 int height_close, width_close, height_far, width_far, num_ladar;
 
+auto param = Param::get_instance();
+
+// 获取相机参数矩阵json
+nlohmann::json camlens;
+
 
 //将点云数据转换为矩阵
 cv::Mat Cloud2Mat(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud)
@@ -43,16 +48,33 @@ cv::Mat Cloud2Mat(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud)
     return output_matrix;
 }
 
+
+cv::Mat undistort_image_close;
+
+
 void far_image_callback(const sensor_msgs::Image::ConstPtr& msg){
     printf("far image receive\n");
     cv::Mat far_frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image.clone();
+    // 对图像去畸变
+    // cv::Mat intrinsic_matrix;                               
+    // cv::Mat distortion_coeffs;    
+    // Param::from_json(camlens["Far"]["Intrinsic"], intrinsic_matrix);
+    // Param::from_json(camlens["Far"]["Distortion"], distortion_coeffs);
+    // cv::undistort(far_frame, undistort_image_close, intrinsic_matrix, distortion_coeffs);
     memcpy(far_buffer, far_frame.data, height_far * width_far * 3);
 }
 
+cv::Mat undistort_image_far;
 
 void close_image_callback(const sensor_msgs::Image::ConstPtr& msg){
     printf("close image receive\n");
-    cv::Mat close_frame  = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image.clone();
+    cv::Mat close_frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image.clone();
+    // 对图像去畸变
+    // cv::Mat intrinsic_matrix;
+    // cv::Mat distortion_coeffs;
+    // Param::from_json(camlens["Close"]["Intrinsic"], intrinsic_matrix);
+    // Param::from_json(camlens["Close"]["Distortion"], distortion_coeffs);
+    // cv::undistort(close_frame, undistort_image_far, intrinsic_matrix, distortion_coeffs);
     memcpy(close_buffer, close_frame.data, height_close * width_close * 3);
 }
 
@@ -65,14 +87,25 @@ void lidar_callback(const sensor_msgs::PointCloud2ConstPtr &temp_cloud)
     memcpy(radar_buffer, cloud_matrix->data, num_ladar * 4 * 4);
 }
 
-void extrinsic_callback(const radar_msgs::points &points){
-    printf("extrinsic receive\n");
+
+void close_extrinsic_callback(const radar_msgs::points &points){
+    printf("close_extrinsic receive\n");
     rm::RadarData *extrinsic = (rm::RadarData *)extrinsic_buffer;
-    extrinsic->is_valid = true;
     for(int i = 0; i < 4; i++){
-        extrinsic->image_zed_calib[i].x = points.data[i].x;
-        extrinsic->image_zed_calib[i].y = points.data[i].y;
+        extrinsic->image_zed_calib[0][i].x = points.data[i].x;
+        extrinsic->image_zed_calib[0][i].y = points.data[i].y;
     }
+}
+
+
+void far_extrinsic_callback(const radar_msgs::points &points){
+    printf("far_extrinsic receive\n");
+    rm::RadarData *extrinsic = (rm::RadarData *)extrinsic_buffer;
+    for(int i = 0; i < 4; i++){
+        extrinsic->image_zed_calib[1][i].x = points.data[i].x;
+        extrinsic->image_zed_calib[1][i].y = points.data[i].y;
+    }
+    extrinsic->is_valid = true;
 }
 
 
@@ -86,6 +119,17 @@ int main(int agrc, char *argv[]){
 
     // 睡眠1s  FIXME: 不加会出问题，暂时不清楚为什么????
     sleep(1);
+
+    std::string camlen_path = (*param)["Camera"]["CamLensDir"];
+    try {
+        std::ifstream camlens_json(camlen_path);
+        camlens_json >> camlens;
+        camlens_json.close();
+    } catch (std::exception& e) {
+        std::string err_str = "Failed to load CamLens json: " + std::string(e.what());
+        std::cout << err_str << std::endl;
+        return false;
+    }
     
     // close_buffer
     height_close = (*param)["Camera"]["Close"]["Height"];
@@ -117,7 +161,8 @@ int main(int agrc, char *argv[]){
     std::string extrinsic_name = (*param)["Extrinsic"]["Name"];
     extrinsic_buffer = (void *)rm::__shm_alloc__(rm::__gen_hash_key__(extrinsic_name), sizeof(rm::RadarData));
     memset(extrinsic_buffer, 0, sizeof(rm::RadarData));
-    ros::Subscriber extrinsic_sub = nh.subscribe("/sensor_close/calibration", 1, &extrinsic_callback);
+    ros::Subscriber close_extrinsic_sub = nh.subscribe("/sensor_close/calibration", 1, &close_extrinsic_callback);
+    ros::Subscriber far_extrinsic_sub = nh.subscribe("/sensor_far/calibration", 1, &far_extrinsic_callback);
 
 
 

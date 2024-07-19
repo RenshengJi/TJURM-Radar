@@ -16,6 +16,7 @@ std::vector<cv::Mat> Data::depth;
 // 外参标定结果
 rm::RadarData* Data::extrinsic;
 Eigen::Matrix<double, 4, 4> Data::radar2place;
+std::vector<Eigen::Matrix<double, 4, 4>> Data::camera2place;
 
 // 敌方6辆车的位置
 std::vector<cv::Point3f> Data::enemy_pos;

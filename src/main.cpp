@@ -34,6 +34,16 @@ int main(int argc, char* argv[]) {
     // 主循环
     while(true){
 
+        // FIXME: 首先copy一份出来
+        // TODO: 对Data::camera[i]->image_buffer去畸变(便于和点云深度图叠加)
+        for(int i = 0; i < Data::camera.size(); i++){
+            memcpy(Data::camera[i]->image, Data::camera[i]->image_buffer, Data::camera[i]->height * Data::camera[i]->width * 3);
+            cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image);
+            cv::Mat undistort_image;
+            cv::undistort(image, undistort_image, Data::camera[i]->intrinsic_matrix, Data::camera[i]->distortion_coeffs);
+            memcpy(Data::camera[i]->image, undistort_image.data, Data::camera[i]->height * Data::camera[i]->width * 3);
+        }
+
         // 神经网络推理，得到装甲板的2D位置，同时注意记录相机id
         std::shared_ptr<std::vector<rm::YoloRectWithCamera>> yolo_list = std::make_shared<std::vector<rm::YoloRectWithCamera>>();
         for(int i = 0; i < Data::camera.size(); i++){
@@ -46,16 +56,25 @@ int main(int argc, char* argv[]) {
             Data::radar_depth[i] = PointCloud2Depth(Data::radar, Data::camera[i]);
         }
 
+        cv::Mat map = Data::map.clone();
+
         // 获取装甲板在场地坐标系下的3D坐标
         for(auto& yolo : *yolo_list){
 
             // 只处理敌方类别 TODO:
             // if(yolo.color == Data::self_color)
             //     continue;
+            // 不处理建筑物
+            if(yolo.class_id % 9 >= 6)
+                continue;
             int camera_id = yolo.camera_id;
             std::vector<cv::Point3f> armor_3d;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
             int x = yolo.box.x, y = yolo.box.y, w = yolo.box.width, h = yolo.box.height;
+            // TODO: 往下操作一波(不然不是车的中心)
+            if(y + 3*h > Data::camera[camera_id]->height)
+                continue;
+            y += 2*h;
             for(int i = x; i < x + w; i++){
                 for(int j = y; j < y + h; j++){
                     // TODO: 联合标定法深度获取
@@ -78,22 +97,22 @@ int main(int argc, char* argv[]) {
 
                     // 单目法深度获取
                     if(Data::depth[camera_id].at<double>(j, i) != 0){
+                        std::cout <<  Data::depth[camera_id].at<double>(j, i) << " ";
                         // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
                         double z = Data::depth[camera_id].at<double>(j, i) * 1000;
                         cv::Mat point_pixel = (cv::Mat_<double>(3, 1) << i*z, j*z, z);
                         cv::Mat camera_cor_mat = Data::camera[camera_id]->intrinsic_matrix.inv() * point_pixel;
                         Eigen::Vector4d camera_cor(camera_cor_mat.at<double>(0), camera_cor_mat.at<double>(1), camera_cor_mat.at<double>(2), 1);
 
-                        // 2. 计算该点在云台坐标系下的坐标（利用相机坐标系下的坐标，以及联合标定矩阵）
-                        Eigen::Vector4d head_cor = Data::camera[camera_id]->Trans_pnp2head.inverse() * camera_cor;
-
-                        // 3. 计算该点在场地坐标系下的坐标（利用云台坐标系下的坐标，以及外参矩阵）
-                        Eigen::Vector4d world_cor = Data::radar2place * head_cor;
+                        // 2. 计算该点在场地坐标系下的坐标（利用相机坐标系下的坐标，以及外参矩阵）
+                        Eigen::Vector4d world_cor = Data::camera2place[camera_id] * camera_cor;
 
                         armor_3d.push_back(cv::Point3f(world_cor(0), world_cor(1), world_cor(2)));
                     }
                 }
             }
+            std::cout << std::endl;
+            std::cout << "-------------------" <<   yolo.class_id%9 <<   "-------------------" << std::endl;
 
             if(armor_3d.size() == 0)
                 continue;
@@ -108,22 +127,35 @@ int main(int argc, char* argv[]) {
             armor_3d_mean.y /= armor_3d.size();
             armor_3d_mean.z /= armor_3d.size();
 
-            std::cout << "armor_3d_mean: " << armor_3d_mean << std::endl;
-
             // 将检测到的点绘制到小地图上
-            cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/30, Data::map.rows - armor_3d_mean.y/30);
-            cv::circle(Data::map, armor_2d, 10, cv::Scalar(0, 0, 255), -1);
+            int scale = 3 * 10;
+            cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/scale, Data::map.rows - armor_3d_mean.y/scale);
+            cv::circle(map, armor_2d, 10, cv::Scalar(0, 0, 255), -1);
+            // 写出类别(class_id)
+            cv::putText(map, std::to_string(yolo.class_id % 9), armor_2d, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
         }
 
-    
+
+        // TODO: 绘制图像和点云深度叠加图，检测外参标定效果
+        for(int i = 0; i < Data::camera.size(); i++){
+            cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image).clone();
+            cv::Mat depth_image = Data::depth[i];
+            for(int i = 0; i < depth_image.rows; i++){
+                for(int j = 0; j < depth_image.cols; j++){
+                    double pixel = depth_image.at<double>(i, j);
+                    // pixel, 从0到1, 红近蓝远
+                    pixel = pixel < 1 ? 0 : pixel > 30 ? 1 : pixel/30.0;
+                    if(pixel != 0){
+                        image.at<cv::Vec3b>(i, j) = image.at<cv::Vec3b>(i, j) * 0.5 + cv::Vec3b(255*pixel, 0, 255*(1-pixel)) * 0.5;
+                    }
+                }
+            }
+            cv::resize(image, image, cv::Size(1280, 960));
+            cv::imshow("image" + std::to_string(i), image);
+        }
         
-        cv::imshow("map", Data::map);
+        cv::imshow("map", map);
         cv::waitKey(1);
-
-
-        
-
-
     }
 
     return 0;

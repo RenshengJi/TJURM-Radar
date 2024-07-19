@@ -7,7 +7,7 @@
 
 std::shared_ptr<std::vector<rm::YoloRectWithCamera>> RGB_MODEL::detect_armor(int camera_id) {
     rm::memcpyYoloCameraBuffer(
-            Data::camera[camera_id]->image_buffer,
+            Data::camera[camera_id]->image,
             Data::camera[camera_id]->rgb_host_buffer,
             Data::camera[camera_id]->rgb_device_buffer,
             Data::camera[camera_id]->width,

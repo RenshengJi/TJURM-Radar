@@ -4,7 +4,15 @@ project(driver_bridge)
 add_compile_options(-g -O0)
 
 set(cv_bridge_DIR /usr/local/cv_bridge4.5.4/share/cv_bridge/cmake)
-find_package(OpenCV 4.5.4 REQUIRED)
+# set(OpenCV_DIR /usr/local/opencv4.5.4/lib/cmake/opencv4)
+
+
+# 注意，要找到正确的opencv包需要这么写！！
+find_package(OpenCV 4.5.4 EXACT)
+
+# 输出opencv的版本
+# message(STATUS "OpenCV version: ${OpenCV_VERSION}")
+
 find_package(PCL REQUIRED)
 find_package(OpenRM REQUIRED)
 find_package(catkin REQUIRED COMPONENTS

@@ -32,16 +32,16 @@ bool init_driver() {
     rm::mallocYoloCameraBuffer(&Data::camera[0]->rgb_host_buffer, &Data::camera[0]->rgb_device_buffer, Data::camera[0]->width, Data::camera[0]->height);
 
     // camera[1] Far-left
-    // Data::camera.push_back(new rm::Camera());
-    // Data::camera[0]->camera_id = 1;
-    // Data::camera[1]->width = (*param)["Camera"]["Far"]["Width"];
-    // Data::camera[1]->height = (*param)["Camera"]["Far"]["Height"];
-    // Param::from_json(camlens["Far"]["Intrinsic"], Data::camera[1]->intrinsic_matrix);
-    // Param::from_json(camlens["Far"]["Distortion"], Data::camera[1]->distortion_coeffs);
-    // Param::from_json(camlens["Far"]["Extrinsic"], extrinsic_matrix);
-    // rm::tf_Mat4d(extrinsic_matrix, Data::camera[0]->Trans_pnp2head);
-    // Data::camera[1]->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Far"]["Name"]), Data::camera[1]->height * Data::camera[1]->width * 3);
-    // rm::mallocYoloCameraBuffer(&Data::camera[1]->rgb_host_buffer, &Data::camera[1]->rgb_device_buffer, Data::camera[1]->width, Data::camera[1]->height);
+    Data::camera.push_back(new rm::Camera());
+    Data::camera[1]->camera_id = 1;
+    Data::camera[1]->width = (*param)["Camera"]["Far"]["Width"];
+    Data::camera[1]->height = (*param)["Camera"]["Far"]["Height"];
+    Param::from_json(camlens["Far"]["Intrinsic"], Data::camera[1]->intrinsic_matrix);
+    Param::from_json(camlens["Far"]["Distortion"], Data::camera[1]->distortion_coeffs);
+    Param::from_json(camlens["Far"]["Extrinsic"], extrinsic_matrix);
+    rm::tf_Mat4d(extrinsic_matrix, Data::camera[1]->Trans_pnp2head);
+    Data::camera[1]->image_buffer = (uint8_t *)rm::__shm_alloc__(rm::__gen_hash_key__((*param)["Camera"]["Far"]["Name"]), Data::camera[1]->height * Data::camera[1]->width * 3);
+    rm::mallocYoloCameraBuffer(&Data::camera[1]->rgb_host_buffer, &Data::camera[1]->rgb_device_buffer, Data::camera[1]->width, Data::camera[1]->height);
 
     // radar
     Data::radar = new rm::Radar();
@@ -64,5 +64,9 @@ bool init_driver() {
     Data::map = cv::imread(map_dir);
     cv::resize(Data::map, Data::map, cv::Size(Data::map.cols/3, Data::map.rows/3));
 
+    // 初始化Data::camera[i]->image
+    for(int i = 0; i < Data::camera.size(); i++){
+        Data::camera[i]->image = (uint8_t *)malloc(Data::camera[i]->width * Data::camera[i]->height * 3);
+    }
     return true;
 }
