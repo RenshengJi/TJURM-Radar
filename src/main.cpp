@@ -2,6 +2,7 @@
 #include "data_manager/base.h"
 #include "model/init.h"
 #include "fuse/fuse.h"
+#include "fuse/dbscan.h"
 #include <serial/serial.h>
 #include "serial/serial_.h"
 #include <thread>
@@ -72,7 +73,7 @@ int main(int argc, char* argv[]) {
                     continue;
             }
             int camera_id = yolo.camera_id;
-            std::vector<cv::Point3f> armor_3d;
+            std::vector<point> armor_3d_point;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
             int x = yolo.box.x, y = yolo.box.y, w = yolo.box.width, h = yolo.box.height;
             // TODO: 往下操作一波(不然不是车的中心)
@@ -82,22 +83,6 @@ int main(int argc, char* argv[]) {
             for(int i = x; i < x + w; i++){
                 for(int j = y; j < y + h; j++){
                     // TODO: 方法一 联合标定法深度获取
-                    // // 如果深度图中该点深度值不为0，可以参与计算
-                    // if(Data::radar_depth[camera_id].at<float>(j, i) != 0){
-                    //     // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
-                    //     float z = Data::radar_depth[camera_id].at<float>(j, i);
-                    //     cv::Mat point_pixel = (cv::Mat_<float>(3, 1) << i*z, j*z, z);
-                    //     cv::Mat camera_cor_mat = Data::camera[camera_id]->intrinsic_matrix.inv() * point_pixel;
-                    //     Eigen::Vector4d camera_cor(camera_cor_mat.at<float>(0), camera_cor_mat.at<float>(1), camera_cor_mat.at<float>(2), 1);
-
-                    //     // 2. 计算该点在云台坐标系下的坐标（利用相机坐标系下的坐标，以及联合标定矩阵）
-                    //     Eigen::Vector4d head_cor = Data::camera[camera_id]->Trans_pnp2head.inverse() * camera_cor;
-
-                    //     // 3. 计算该点在场地坐标系下的坐标（利用云台坐标系下的坐标，以及外参矩阵）
-                    //     Eigen::Vector4d world_cor = Data::radar2place.inverse() * head_cor;
-
-                    //     armor_3d.push_back(cv::Point3f(world_cor(0), world_cor(1), world_cor(2)));
-                    // }
 
                     // 方法二: 单目法深度获取
                     if(Data::depth[camera_id].at<double>(j, i) != 0){
@@ -111,27 +96,26 @@ int main(int argc, char* argv[]) {
                         // 2. 计算该点在场地坐标系下的坐标（利用相机坐标系下的坐标，以及外参矩阵）
                         Eigen::Vector4d world_cor = Data::camera2place[camera_id] * camera_cor;
 
-                        armor_3d.push_back(cv::Point3f(world_cor(0), world_cor(1), world_cor(2)));
+                        cv::Point3f armor_3d = cv::Point3f(world_cor(0), world_cor(1), world_cor(2));
+                        point p;
+                        p.pos = armor_3d;
+                        p.depth = z/1000;
+                        armor_3d_point.push_back(p);
                     }
                     // TODO: 动态点云深度获取
                 }
             }
-            // std::cout << std::endl;
-            // std::cout << "-------------------" <<   yolo.class_id%9 <<   "-------------------" << std::endl;
 
-            if(armor_3d.size() == 0)
+            if(armor_3d_point.size() == 0)
                 continue;
-            // 对取到的3D坐标直接取平均 TODO: 更好的方法(聚类)
-            cv::Point3f armor_3d_mean(0, 0, 0);
-            for(auto& point : armor_3d){
-                armor_3d_mean.x += point.x;
-                armor_3d_mean.y += point.y;
-                armor_3d_mean.z += point.z;
-            }
-            armor_3d_mean.x /= armor_3d.size();
-            armor_3d_mean.y /= armor_3d.size();
-            armor_3d_mean.z /= armor_3d.size();
 
+            cv::Point3f armor_3d_mean = dbscan(armor_3d_point, 0.1, 2);
+
+            printf("x: %f y: %f z: %f\n", armor_3d_mean.x, armor_3d_mean.y, armor_3d_mean.z);
+
+
+            // // 对取到的3D坐标直接取平均 TODO: 更好的方法(聚类)
+            
             // 将检测到的点绘制到小地图上
             int scale = 3 * 10;
             cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/scale, Data::map.rows - armor_3d_mean.y/scale);
@@ -186,12 +170,12 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            cv::resize(image, image, cv::Size(1280, 960));
-            cv::imshow("image" + std::to_string(i), image);
+            // cv::resize(image, image, cv::Size(1280, 960));
+            // cv::imshow("image" + std::to_string(i), image);
         }
         
-        cv::imshow("map", map);
-        cv::waitKey(1);
+        // cv::imshow("map", map);
+        // cv::waitKey(1);
     }
 
     return 0;
