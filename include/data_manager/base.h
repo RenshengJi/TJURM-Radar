@@ -6,11 +6,21 @@
 #include <Eigen/Dense>
 #include <cstdint>
 #include <serial/serial.h>
+#include "serial/serial_.h"
 
 namespace Data {
     // 颜色
     extern rm::ArmorColor self_color;
     extern rm::ArmorColor enemy_color;
+
+    // 雷达标记进度数据
+    extern radar_mark_data_t radar_mark_data;
+    extern radar_info_t radar_info;
+
+    // 雷达标记数据
+    extern map_robot_data_t map_robot_data;
+    extern radar_cmd_t radar_cmd;
+    extern map_data map_data;
 
     // 相机的参数记录
     extern std::vector<rm::Camera*> camera;

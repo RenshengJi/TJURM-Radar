@@ -4,6 +4,14 @@
 rm::ArmorColor Data::self_color;
 rm::ArmorColor Data::enemy_color;
 
+// 雷达标记进度数据
+radar_mark_data_t Data::radar_mark_data;
+radar_info_t Data::radar_info;
+
+// 雷达标记数据
+map_robot_data_t Data::map_robot_data;
+radar_cmd_t Data::radar_cmd;
+map_data Data::map_data;
 
 // 设备
 std::vector<rm::Camera*> Data::camera;

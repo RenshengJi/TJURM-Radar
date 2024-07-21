@@ -68,5 +68,10 @@ bool init_driver() {
     for(int i = 0; i < Data::camera.size(); i++){
         Data::camera[i]->image = (uint8_t *)malloc(Data::camera[i]->width * Data::camera[i]->height * 3);
     }
+
+    // 初始化map_robot_data和radar_cmd
+    memset(&Data::map_robot_data, 0, sizeof(map_robot_data_t));
+    memset(&Data::radar_cmd, 0, sizeof(radar_cmd_t));
+
     return true;
 }

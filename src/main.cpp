@@ -15,17 +15,18 @@ int main(int argc, char* argv[]) {
         if(init_driver()) break;
     }
 
+    // 初始化模型
+    auto rgb_model = RGB_MODEL::get_instance();
+
+    // 初始化串口，建立接收、发送数据线程并进入
+    serial_port_init();
+    std::thread serial_thread_receive(serial_port_recv);
+    std::thread serial_thread_send(serial_port_send);
+
     // 等待外参标定结果
     while(true){
         if(extrinsic_calib()) break;
     }
-
-    // 初始化模型
-    auto rgb_model = RGB_MODEL::get_instance();
-
-    // 初始化串口，建立接收数据线程并进入
-    serial_port_init();
-    std::thread serial_thread(serial_port_recv);
 
     // 初始化深度图(需要外参支持)
     init_depth();
@@ -34,8 +35,6 @@ int main(int argc, char* argv[]) {
     // 主循环
     while(true){
 
-        // FIXME: 首先copy一份出来
-        // TODO: 对Data::camera[i]->image_buffer去畸变(便于和点云深度图叠加)
         for(int i = 0; i < Data::camera.size(); i++){
             memcpy(Data::camera[i]->image, Data::camera[i]->image_buffer, Data::camera[i]->height * Data::camera[i]->width * 3);
             cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image);
@@ -60,13 +59,18 @@ int main(int argc, char* argv[]) {
 
         // 获取装甲板在场地坐标系下的3D坐标
         for(auto& yolo : *yolo_list){
-
-            // 只处理敌方类别 TODO:
-            // if(yolo.color == Data::self_color)
-            //     continue;
-            // 不处理建筑物
+            
+            // 只处理敌方地面车辆   
             if(yolo.class_id % 9 >= 6)
                 continue;
+            if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
+                if(yolo.class_id / 9 != 0)
+                    continue;
+            }
+            else{
+                if(yolo.class_id / 9 != 1)
+                    continue;
+            }
             int camera_id = yolo.camera_id;
             std::vector<cv::Point3f> armor_3d;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
@@ -77,7 +81,7 @@ int main(int argc, char* argv[]) {
             y += 2*h;
             for(int i = x; i < x + w; i++){
                 for(int j = y; j < y + h; j++){
-                    // TODO: 联合标定法深度获取
+                    // TODO: 方法一 联合标定法深度获取
                     // // 如果深度图中该点深度值不为0，可以参与计算
                     // if(Data::radar_depth[camera_id].at<float>(j, i) != 0){
                     //     // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
@@ -95,9 +99,9 @@ int main(int argc, char* argv[]) {
                     //     armor_3d.push_back(cv::Point3f(world_cor(0), world_cor(1), world_cor(2)));
                     // }
 
-                    // 单目法深度获取
+                    // 方法二: 单目法深度获取
                     if(Data::depth[camera_id].at<double>(j, i) != 0){
-                        std::cout <<  Data::depth[camera_id].at<double>(j, i) << " ";
+                        // std::cout <<  Data::depth[camera_id].at<double>(j, i) << " ";
                         // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
                         double z = Data::depth[camera_id].at<double>(j, i) * 1000;
                         cv::Mat point_pixel = (cv::Mat_<double>(3, 1) << i*z, j*z, z);
@@ -109,14 +113,15 @@ int main(int argc, char* argv[]) {
 
                         armor_3d.push_back(cv::Point3f(world_cor(0), world_cor(1), world_cor(2)));
                     }
+                    // TODO: 动态点云深度获取
                 }
             }
-            std::cout << std::endl;
-            std::cout << "-------------------" <<   yolo.class_id%9 <<   "-------------------" << std::endl;
+            // std::cout << std::endl;
+            // std::cout << "-------------------" <<   yolo.class_id%9 <<   "-------------------" << std::endl;
 
             if(armor_3d.size() == 0)
                 continue;
-            // 对取到的3D坐标直接取平均 TODO: 更好的方法
+            // 对取到的3D坐标直接取平均 TODO: 更好的方法(聚类)
             cv::Point3f armor_3d_mean(0, 0, 0);
             for(auto& point : armor_3d){
                 armor_3d_mean.x += point.x;
@@ -133,10 +138,41 @@ int main(int argc, char* argv[]) {
             cv::circle(map, armor_2d, 10, cv::Scalar(0, 0, 255), -1);
             // 写出类别(class_id)
             cv::putText(map, std::to_string(yolo.class_id % 9), armor_2d, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+
+            float temp = armor_3d_mean.x;
+            armor_3d_mean.x = armor_3d_mean.y/10;
+            armor_3d_mean.y = 1500 - temp/10;
+
+            // 存入map_robot_data
+            switch (yolo.class_id % 9)
+            {
+                case 0:
+                    Data::map_robot_data.sentry_position_x = armor_3d_mean.x;
+                    Data::map_robot_data.sentry_position_y = armor_3d_mean.y;
+                    break;
+                case 1:
+                    Data::map_robot_data.hero_position_x = armor_3d_mean.x;
+                    Data::map_robot_data.hero_position_y = armor_3d_mean.y;
+                    break;
+                case 2:
+                    Data::map_robot_data.engineer_position_x = armor_3d_mean.x;
+                    Data::map_robot_data.engineer_position_y = armor_3d_mean.y;
+                    break;
+                case 3:
+                    Data::map_robot_data.infantry_3_position_x = armor_3d_mean.x;
+                    Data::map_robot_data.infantry_3_position_y = armor_3d_mean.y;
+                    break;
+                case 4:
+                    Data::map_robot_data.infantry_4_position_x = armor_3d_mean.x;
+                    Data::map_robot_data.infantry_4_position_y = armor_3d_mean.y;
+                    break;
+                case 5:
+                    Data::map_robot_data.infantry_5_position_x = armor_3d_mean.x;
+                    Data::map_robot_data.infantry_5_position_y = armor_3d_mean.y;
+                    break;
+            }
         }
 
-
-        // TODO: 绘制图像和点云深度叠加图，检测外参标定效果
         for(int i = 0; i < Data::camera.size(); i++){
             cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image).clone();
             cv::Mat depth_image = Data::depth[i];
