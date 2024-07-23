@@ -96,19 +96,22 @@ void serial_port_send(){
         usleep(200000);
         send_info();
         send_map();
-        send_sentry();
     }
 
 }
 
-void send_sentry(){
+void send_cmd(){
     packet_robot_interaction_data_t packet;
     packet.header.SOF = 0xA5;
     packet.header.data_length = 7;
     packet.header.seq = 0;
     append_crc8_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet.header));
-    Data::robot_interaction_data.user_data[0] = 0x01;
-    memcpy(&packet.data, &Data::robot_interaction_data, sizeof(robot_interaction_data_t));
+    robot_interaction_data_t robot_interaction_data;
+    robot_interaction_data.sender_id = Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED? 9 : 109;
+    robot_interaction_data.receiver_id = 0x8080;
+    robot_interaction_data.data_cmd_id = 0x0121;
+    robot_interaction_data.user_data = Data::radar_cmd;
+    memcpy(&packet.data, &robot_interaction_data, sizeof(robot_interaction_data_t));
     append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
     Data::ser.write((uint8_t *)&packet, sizeof(packet));
     memset(&Data::robot_interaction_data, 0, sizeof(robot_interaction_data_t));
@@ -133,8 +136,6 @@ void send_info(){
     packet.header.SOF = 0xA5;
     packet.header.data_length = 1;
     packet.header.seq = 0;
-    (&packet.cmd_id)[0] = 0x21;
-    (&packet.cmd_id)[1] = 0x01;
     append_crc8_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet.header));
     memcpy(&packet.data, &Data::radar_cmd, sizeof(radar_cmd_t));
     append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
@@ -183,10 +184,6 @@ void data_process(uint8_t* data, int size){
     else if(data[5] == 0x0E && data[6] == 0x02){
         memcpy(&Data::radar_info, data + 7, sizeof(radar_info_t));
     }
-    // 机器人交互数据(等待启用)
-    else if(data[5] == 0x01 && data[6] == 0x03){
-        std::cout << "机器人交互数据" << std::endl;
-    }
     // 机器人血量数据
     else if(data[5] == 0x03 && data[6] == 0x00){
         game_robot_HP_t game_robot_HP;
@@ -207,5 +204,6 @@ void data_process(uint8_t* data, int size){
             Data::enemy_info[4].is_dehealth = game_robot_HP.red_4_robot_HP < Data::game_robot_HP.red_4_robot_HP;
             Data::enemy_info[5].is_dehealth = game_robot_HP.red_5_robot_HP < Data::game_robot_HP.red_5_robot_HP;
         }
+        Data::game_robot_HP = game_robot_HP;
     }
 }

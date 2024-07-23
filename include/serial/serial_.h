@@ -13,7 +13,7 @@ void serial_port_send();
 void data_process(uint8_t* data, int size);
 void send_map();
 void send_info();
-void send_sentry();
+void send_cmd();
 
 
 // 以下是一大堆包的结构体
@@ -85,7 +85,15 @@ struct radar_info_t
 {
     uint8_t is_have_chance : 2;
     uint8_t is_double_ing : 1;
+    uint8_t placeholder : 5;
 }__attribute__((packed));
+
+// 0x0121 雷达自主决策指令
+struct radar_cmd_t
+{
+    uint8_t radar_cmd;
+}__attribute__((packed));
+
 
 // 0x0301 机器人交互数据(暂无)
 struct robot_interaction_data_t
@@ -93,7 +101,7 @@ struct robot_interaction_data_t
     uint16_t data_cmd_id;
     uint16_t sender_id;
     uint16_t receiver_id;
-    uint8_t user_data[1];
+    radar_cmd_t user_data;
 }__attribute__((packed));
 
 // 0x0305 选手端小地图接收雷达数据
@@ -113,6 +121,9 @@ struct map_robot_data_t
     uint16_t sentry_position_y;
 }__attribute__((packed));
 
+
+
+
 // 帧头
 struct frame_header // 1 + 2 + 1 + 1 = 5
 {
@@ -123,11 +134,7 @@ struct frame_header // 1 + 2 + 1 + 1 = 5
 } __attribute__((packed));
 
 
-// 0x0121 雷达自主决策指令
-struct radar_cmd_t
-{
-    uint8_t radar_cmd ;
-}__attribute__((packed));
+
 
 
 // TODO: 大小端？
@@ -154,6 +161,8 @@ struct packet_robot_interaction_data_t{
     robot_interaction_data_t data;
     uint16_t crc16;
 } __attribute__((packed));
+
+
 
 
 

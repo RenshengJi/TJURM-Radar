@@ -72,6 +72,7 @@ bool init_driver() {
     memset(&Data::map_robot_data, 0, sizeof(map_robot_data_t));
     memset(&Data::radar_cmd, 0, sizeof(radar_cmd_t));
     memset(&Data::game_robot_HP, 0, sizeof(game_robot_HP_t));
+    
 
     // 初始化敌方车信息
     for(int i = 0; i < 6; i++){

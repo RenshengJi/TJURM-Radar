@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
 
     // 主循环
     while(true){
-
+        
+        // 对图像去畸变(目的是为了更好的和由点云转来的深度图做融合)
         for(int i = 0; i < Data::camera.size(); i++){
             memcpy(Data::camera[i]->image, Data::camera[i]->image_buffer, Data::camera[i]->height * Data::camera[i]->width * 3);
             cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image);
@@ -51,10 +52,10 @@ int main(int argc, char* argv[]) {
             yolo_list->insert(yolo_list->end(), yolo_list_single->begin(), yolo_list_single->end());
         }
 
-        // 激光雷达与RGB相机信息融合
-        for(int i = 0; i < Data::camera.size(); i++){
-            Data::radar_depth[i] = PointCloud2Depth(Data::radar, Data::camera[i]);
-        }
+        // // 激光雷达与RGB相机信息融合
+        // for(int i = 0; i < Data::camera.size(); i++){
+        //     Data::radar_depth[i] = PointCloud2Depth(Data::radar, Data::camera[i]);
+        // }
 
         cv::Mat map = Data::map.clone();
 
@@ -64,14 +65,14 @@ int main(int argc, char* argv[]) {
             // 只处理敌方地面车辆   
             if(yolo.class_id % 9 >= 6)
                 continue;
-            // if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
-            //     if(yolo.class_id / 9 != 0)
-            //         continue;
-            // }
-            // else{
-            //     if(yolo.class_id / 9 != 1)
-            //         continue;
-            // }
+            if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
+                if(yolo.class_id / 9 != 0)
+                    continue;
+            }
+            else{
+                if(yolo.class_id / 9 != 1)
+                    continue;
+            }
             int camera_id = yolo.camera_id;
             std::vector<point> armor_3d_point;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
@@ -119,39 +120,42 @@ int main(int argc, char* argv[]) {
             armor_3d_mean.x = armor_3d_mean.y/10;
             armor_3d_mean.y = 1500 - temp/10;
 
-            // 存入map_robot_data
-            switch (yolo.class_id % 9)
-            {
-                case 0:
-                    Data::map_robot_data.sentry_position_x = armor_3d_mean.x;
-                    Data::map_robot_data.sentry_position_y = armor_3d_mean.y;
-                    break;
-                case 1:
-                    Data::map_robot_data.hero_position_x = armor_3d_mean.x;
-                    Data::map_robot_data.hero_position_y = armor_3d_mean.y;
-                    break;
-                case 2:
-                    Data::map_robot_data.engineer_position_x = armor_3d_mean.x;
-                    Data::map_robot_data.engineer_position_y = armor_3d_mean.y;
-                    break;
-                case 3:
-                    Data::map_robot_data.infantry_3_position_x = armor_3d_mean.x;
-                    Data::map_robot_data.infantry_3_position_y = armor_3d_mean.y;
-                    break;
-                case 4:
-                    Data::map_robot_data.infantry_4_position_x = armor_3d_mean.x;
-                    Data::map_robot_data.infantry_4_position_y = armor_3d_mean.y;
-                    break;
-                case 5:
-                    Data::map_robot_data.infantry_5_position_x = armor_3d_mean.x;
-                    Data::map_robot_data.infantry_5_position_y = armor_3d_mean.y;
-                    break;
-            }
+            Data::enemy_info[yolo.class_id % 9].pos = armor_3d_mean;
+
+            // // 存入map_robot_data
+            // switch (yolo.class_id % 9)
+            // {
+            //     case 0:
+            //         Data::map_robot_data.sentry_position_x = armor_3d_mean.x;
+            //         Data::map_robot_data.sentry_position_y = armor_3d_mean.y;
+            //         break;
+            //     case 1:
+            //         Data::map_robot_data.hero_position_x = armor_3d_mean.x;
+            //         Data::map_robot_data.hero_position_y = armor_3d_mean.y;
+            //         break;
+            //     case 2:
+            //         Data::map_robot_data.engineer_position_x = armor_3d_mean.x;
+            //         Data::map_robot_data.engineer_position_y = armor_3d_mean.y;
+            //         break;
+            //     case 3:
+            //         Data::map_robot_data.infantry_3_position_x = armor_3d_mean.x;
+            //         Data::map_robot_data.infantry_3_position_y = armor_3d_mean.y;
+            //         break;
+            //     case 4:
+            //         Data::map_robot_data.infantry_4_position_x = armor_3d_mean.x;
+            //         Data::map_robot_data.infantry_4_position_y = armor_3d_mean.y;
+            //         break;
+            //     case 5:
+            //         Data::map_robot_data.infantry_5_position_x = armor_3d_mean.x;
+            //         Data::map_robot_data.infantry_5_position_y = armor_3d_mean.y;
+            //         break;
+            // }
         }
 
 
-        clock_t time;
+
         // 判断是否有机会开启双倍易伤
+        clock_t time;
         // 1.条件一: 不在双倍易伤状态，且当前有机会开启双倍易伤
         if(Data::radar_info.is_double_ing != 1 && Data::radar_info.is_have_chance >= 1){
             // 2.条件二: 存在正在被标记的车，且其正在掉血(不然开了双倍易伤也没用)
@@ -165,12 +169,14 @@ int main(int argc, char* argv[]) {
                     else if(Data::radar_cmd.radar_cmd == 1){
                         if((clock() - time) / CLOCKS_PER_SEC > 30){
                             Data::radar_cmd.radar_cmd = 2;
+                            send_cmd();
                             break;
                         }
                     }
                     // 如果还没有触发过双倍易伤，则触发，同时记录当前时间
                     else{
                         Data::radar_cmd.radar_cmd = 1;
+                        send_cmd();
                         time = clock();
                         break;
                     }
