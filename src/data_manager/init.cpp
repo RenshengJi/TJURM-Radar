@@ -57,7 +57,6 @@ bool init_driver() {
     std::string extrinsic_name = (*param)["Extrinsic"]["Name"];
     Data::extrinsic = (rm::RadarData *)rm::__shm_alloc__(rm::__gen_hash_key__(extrinsic_name), sizeof(rm::RadarData));
 
-    Data::enemy_pos = std::vector<cv::Point3f>(6, cv::Point3f(0, 0, 0));
 
     // 小地图map
     std::string map_dir = (*param)["Map"]["Dir"];
@@ -72,6 +71,16 @@ bool init_driver() {
     // 初始化map_robot_data和radar_cmd
     memset(&Data::map_robot_data, 0, sizeof(map_robot_data_t));
     memset(&Data::radar_cmd, 0, sizeof(radar_cmd_t));
+    memset(&Data::game_robot_HP, 0, sizeof(game_robot_HP_t));
+
+    // 初始化敌方车信息
+    for(int i = 0; i < 6; i++){
+        Car car;
+        car.pos = cv::Point3f(0, 0, 0);
+        car.is_debuff = false;
+        car.is_dehealth = false;
+        Data::enemy_info.push_back(car);
+    }
 
     return true;
 }

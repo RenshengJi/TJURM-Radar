@@ -8,19 +8,31 @@
 #include <serial/serial.h>
 #include "serial/serial_.h"
 
+
+// 存储地敌方车辆信息 0哨兵 1-5同车辆贴纸数字
+struct Car {
+    cv::Point3f pos;   // 场地坐标系下的坐标
+    bool is_debuff;     // 是否正在debuff状态
+    bool is_dehealth;   // 是否正在掉血
+};
+
 namespace Data {
     // 颜色
     extern rm::ArmorColor self_color;
     extern rm::ArmorColor enemy_color;
 
+    // 敌方车信息
+    extern std::vector<Car> enemy_info;
+
     // 雷达标记进度数据
     extern radar_mark_data_t radar_mark_data;
     extern radar_info_t radar_info;
+    extern robot_interaction_data_t robot_interaction_data;
+    extern game_robot_HP_t game_robot_HP;
 
     // 雷达标记数据
     extern map_robot_data_t map_robot_data;
     extern radar_cmd_t radar_cmd;
-    extern map_data map_data;
 
     // 相机的参数记录
     extern std::vector<rm::Camera*> camera;

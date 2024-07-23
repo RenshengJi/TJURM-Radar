@@ -16,13 +16,13 @@ int main(int argc, char* argv[]) {
         if(init_driver()) break;
     }
 
-    // 初始化模型
-    auto rgb_model = RGB_MODEL::get_instance();
-
     // 初始化串口，建立接收、发送数据线程并进入
     serial_port_init();
     std::thread serial_thread_receive(serial_port_recv);
     std::thread serial_thread_send(serial_port_send);
+
+    // 初始化模型
+    auto rgb_model = RGB_MODEL::get_instance();
 
     // 等待外参标定结果
     while(true){
@@ -64,27 +64,23 @@ int main(int argc, char* argv[]) {
             // 只处理敌方地面车辆   
             if(yolo.class_id % 9 >= 6)
                 continue;
-            if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
-                if(yolo.class_id / 9 != 0)
-                    continue;
-            }
-            else{
-                if(yolo.class_id / 9 != 1)
-                    continue;
-            }
+            // if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
+            //     if(yolo.class_id / 9 != 0)
+            //         continue;
+            // }
+            // else{
+            //     if(yolo.class_id / 9 != 1)
+            //         continue;
+            // }
             int camera_id = yolo.camera_id;
             std::vector<point> armor_3d_point;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
             int x = yolo.box.x, y = yolo.box.y, w = yolo.box.width, h = yolo.box.height;
-            // TODO: 往下操作一波(不然不是车的中心)
-            if(y + 3*h > Data::camera[camera_id]->height)
-                continue;
-            y += 2*h;
+            
             for(int i = x; i < x + w; i++){
                 for(int j = y; j < y + h; j++){
-                    // TODO: 方法一 联合标定法深度获取
 
-                    // 方法二: 单目法深度获取
+                    // 方法一: 单目法深度获取
                     if(Data::depth[camera_id].at<double>(j, i) != 0){
                         // std::cout <<  Data::depth[camera_id].at<double>(j, i) << " ";
                         // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
@@ -102,7 +98,7 @@ int main(int argc, char* argv[]) {
                         p.depth = z/1000;
                         armor_3d_point.push_back(p);
                     }
-                    // TODO: 动态点云深度获取
+                    // TODO: 方法二:动态点云深度获取
                 }
             }
 
@@ -111,11 +107,7 @@ int main(int argc, char* argv[]) {
 
             cv::Point3f armor_3d_mean = dbscan(armor_3d_point, 0.1, 2);
 
-            printf("x: %f y: %f z: %f\n", armor_3d_mean.x, armor_3d_mean.y, armor_3d_mean.z);
 
-
-            // // 对取到的3D坐标直接取平均 TODO: 更好的方法(聚类)
-            
             // 将检测到的点绘制到小地图上
             int scale = 3 * 10;
             cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/scale, Data::map.rows - armor_3d_mean.y/scale);
@@ -157,6 +149,38 @@ int main(int argc, char* argv[]) {
             }
         }
 
+
+        clock_t time;
+        // 判断是否有机会开启双倍易伤
+        // 1.条件一: 不在双倍易伤状态，且当前有机会开启双倍易伤
+        if(Data::radar_info.is_double_ing != 1 && Data::radar_info.is_have_chance >= 1){
+            // 2.条件二: 存在正在被标记的车，且其正在掉血(不然开了双倍易伤也没用)
+            for(auto& enemy : Data::enemy_info){
+                if(enemy.is_debuff && enemy.is_dehealth){
+                    // 如果已经触发两次了，那拜拜
+                    if(Data::radar_cmd.radar_cmd == 2){
+                        break;
+                    }
+                    // 如果已经触发一次，那看看时间有没有超过30s(因为一次双倍易伤持续时间为30s)
+                    else if(Data::radar_cmd.radar_cmd == 1){
+                        if((clock() - time) / CLOCKS_PER_SEC > 30){
+                            Data::radar_cmd.radar_cmd = 2;
+                            break;
+                        }
+                    }
+                    // 如果还没有触发过双倍易伤，则触发，同时记录当前时间
+                    else{
+                        Data::radar_cmd.radar_cmd = 1;
+                        time = clock();
+                        break;
+                    }
+                }
+            }
+        }
+
+
+
+        // 绘制深度与RGB的叠加图
         for(int i = 0; i < Data::camera.size(); i++){
             cv::Mat image = cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_8UC3, Data::camera[i]->image).clone();
             cv::Mat depth_image = Data::depth[i];

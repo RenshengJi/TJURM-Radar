@@ -12,8 +12,8 @@ void serial_port_recv();
 void serial_port_send();
 void data_process(uint8_t* data, int size);
 void send_map();
-void send_map_old();
 void send_info();
+void send_sentry();
 
 
 // 以下是一大堆包的结构体
@@ -25,6 +25,34 @@ struct game_status_t
     uint16_t stage_remain_time;
     uint64_t SyncTimeStamp;
 }__attribute__((packed));
+
+
+// 0x0003 机器人血量数据
+struct game_robot_HP_t
+{
+    uint16_t red_1_robot_HP;
+    uint16_t red_2_robot_HP;
+    uint16_t red_3_robot_HP;
+    uint16_t red_4_robot_HP;
+    uint16_t red_5_robot_HP;
+    uint16_t red_7_robot_HP;
+    uint16_t red_outpost_HP;
+    uint16_t red_base_HP;
+    uint16_t blue_1_robot_HP;
+    uint16_t blue_2_robot_HP;
+    uint16_t blue_3_robot_HP;
+    uint16_t blue_4_robot_HP;
+    uint16_t blue_5_robot_HP;
+    uint16_t blue_7_robot_HP;
+    uint16_t blue_outpost_HP;
+    uint16_t blue_base_HP;
+}__attribute__((packed));
+
+// // 0x0101 场地事件数据 暂不使用
+// struct event_data_t
+// {
+//     uint32_t event_data;
+// }__attribute__((packed));
 
 // 0x0201 机器人性能体系数据
 struct robot_status_t
@@ -60,6 +88,13 @@ struct radar_info_t
 }__attribute__((packed));
 
 // 0x0301 机器人交互数据(暂无)
+struct robot_interaction_data_t
+{
+    uint16_t data_cmd_id;
+    uint16_t sender_id;
+    uint16_t receiver_id;
+    uint8_t user_data[1];
+}__attribute__((packed));
 
 // 0x0305 选手端小地图接收雷达数据
 struct map_robot_data_t
@@ -88,23 +123,6 @@ struct frame_header // 1 + 2 + 1 + 1 = 5
 } __attribute__((packed));
 
 
-///////////////
-struct map_data
-{
-    uint16_t target_robot_id;
-    float target_position_x;
-    float target_position_y;
-} __attribute__((packed));
-struct map_msg // 19
-{
-    frame_header header; // 5
-    uint16_t cmd_id = 0x0305; // 2
-    map_data data; // 10
-    uint16_t crc16; // 2
-} __attribute__((packed));
-///////////////
-
-
 // 0x0121 雷达自主决策指令
 struct radar_cmd_t
 {
@@ -126,6 +144,14 @@ struct radar_info_msgs {
     frame_header header;
     uint16_t cmd_id = 0x0121;
     radar_cmd_t data;
+    uint16_t crc16;
+} __attribute__((packed));
+
+
+struct packet_robot_interaction_data_t{
+    frame_header header;
+    uint16_t cmd_id = 0x0301;
+    robot_interaction_data_t data;
     uint16_t crc16;
 } __attribute__((packed));
 

@@ -96,8 +96,22 @@ void serial_port_send(){
         usleep(200000);
         send_info();
         send_map();
+        send_sentry();
     }
 
+}
+
+void send_sentry(){
+    packet_robot_interaction_data_t packet;
+    packet.header.SOF = 0xA5;
+    packet.header.data_length = 7;
+    packet.header.seq = 0;
+    append_crc8_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet.header));
+    Data::robot_interaction_data.user_data[0] = 0x01;
+    memcpy(&packet.data, &Data::robot_interaction_data, sizeof(robot_interaction_data_t));
+    append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
+    Data::ser.write((uint8_t *)&packet, sizeof(packet));
+    memset(&Data::robot_interaction_data, 0, sizeof(robot_interaction_data_t));
 }
 
 
@@ -110,6 +124,7 @@ void send_map(){
     memcpy(&packet.data, &Data::map_robot_data, sizeof(map_robot_data_t));
     append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
     Data::ser.write((uint8_t *)&packet, sizeof(packet));
+    memset(&Data::map_robot_data, 0, sizeof(map_robot_data_t));
 }
 
 
@@ -143,17 +158,26 @@ void data_process(uint8_t* data, int size){
         memcpy(&robot_status, data + 7, sizeof(robot_status_t));
         if(robot_status.robot_id > 100){
             Data::self_color = rm::ArmorColor::ARMOR_COLOR_BLUE;
-            Data::enemy_color = rm::ArmorColor::ARMOR_COLOR_RED;
+            Data::enemy_color = rm::ArmorColor::ARMOR_COLOR_RED;      
         }
         else{
             Data::self_color = rm::ArmorColor::ARMOR_COLOR_RED;
             Data::enemy_color = rm::ArmorColor::ARMOR_COLOR_BLUE;
         }
-        
+        // 初始化给哨兵发信息的交互数据
+        Data::robot_interaction_data.sender_id = int(robot_status.robot_id);
+        Data::robot_interaction_data.receiver_id = int(robot_status.robot_id) - 2;
+        Data::robot_interaction_data.data_cmd_id = 0x0200;
     }
     // 雷达标记进度数据
     else if(data[5] == 0x0C && data[6] == 0x02){
         memcpy(&Data::radar_mark_data, data + 7, sizeof(radar_mark_data_t));
+        Data::enemy_info[0].is_debuff = Data::radar_mark_data.mark_sentry_progress >= 100;
+        Data::enemy_info[1].is_debuff = Data::radar_mark_data.mark_hero_progress >= 100;
+        Data::enemy_info[2].is_debuff = Data::radar_mark_data.mark_engineer_progress >= 100;
+        Data::enemy_info[3].is_debuff = Data::radar_mark_data.mark_standard_3_progress >= 100;
+        Data::enemy_info[4].is_debuff = Data::radar_mark_data.mark_standard_4_progress >= 100;
+        Data::enemy_info[5].is_debuff = Data::radar_mark_data.mark_standard_5_progress >= 100;
     }
     // 雷达自主决策信息同步
     else if(data[5] == 0x0E && data[6] == 0x02){
@@ -162,5 +186,26 @@ void data_process(uint8_t* data, int size){
     // 机器人交互数据(等待启用)
     else if(data[5] == 0x01 && data[6] == 0x03){
         std::cout << "机器人交互数据" << std::endl;
+    }
+    // 机器人血量数据
+    else if(data[5] == 0x03 && data[6] == 0x00){
+        game_robot_HP_t game_robot_HP;
+        memcpy(&game_robot_HP, data + 7, sizeof(game_robot_HP_t));
+        if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
+            Data::enemy_info[0].is_dehealth = game_robot_HP.blue_7_robot_HP < Data::game_robot_HP.blue_7_robot_HP;
+            Data::enemy_info[1].is_dehealth = game_robot_HP.blue_1_robot_HP < Data::game_robot_HP.blue_1_robot_HP;
+            Data::enemy_info[2].is_dehealth = game_robot_HP.blue_2_robot_HP < Data::game_robot_HP.blue_2_robot_HP;
+            Data::enemy_info[3].is_dehealth = game_robot_HP.blue_3_robot_HP < Data::game_robot_HP.blue_3_robot_HP;
+            Data::enemy_info[4].is_dehealth = game_robot_HP.blue_4_robot_HP < Data::game_robot_HP.blue_4_robot_HP;
+            Data::enemy_info[5].is_dehealth = game_robot_HP.blue_5_robot_HP < Data::game_robot_HP.blue_5_robot_HP;
+        }
+        else{
+            Data::enemy_info[0].is_dehealth = game_robot_HP.red_7_robot_HP < Data::game_robot_HP.red_7_robot_HP;
+            Data::enemy_info[1].is_dehealth = game_robot_HP.red_1_robot_HP < Data::game_robot_HP.red_1_robot_HP;
+            Data::enemy_info[2].is_dehealth = game_robot_HP.red_2_robot_HP < Data::game_robot_HP.red_2_robot_HP;
+            Data::enemy_info[3].is_dehealth = game_robot_HP.red_3_robot_HP < Data::game_robot_HP.red_3_robot_HP;
+            Data::enemy_info[4].is_dehealth = game_robot_HP.red_4_robot_HP < Data::game_robot_HP.red_4_robot_HP;
+            Data::enemy_info[5].is_dehealth = game_robot_HP.red_5_robot_HP < Data::game_robot_HP.red_5_robot_HP;
+        }
     }
 }
