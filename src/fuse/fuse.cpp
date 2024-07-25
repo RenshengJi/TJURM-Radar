@@ -76,12 +76,12 @@ bool extrinsic_calib(){
         // 2. 获取相机坐标
         std::vector<cv::Point2d> radar_cali(4);
         for(int j = 0; j < 4; j++){
-            radar_cali[j].x = Data::extrinsic->image_zed_calib[i][j].x * Data::camera[i]->width;
-            radar_cali[j].y = Data::extrinsic->image_zed_calib[i][j].y * Data::camera[i]->height;
+            radar_cali[j].x = Data::extrinsic->image_zed_calib[j].x * Data::camera[i]->width;
+            radar_cali[j].y = Data::extrinsic->image_zed_calib[j].y * Data::camera[i]->height;
         }
         // 3. 使用solvepnp求解相机与场地坐标系的外参
         cv::Mat rvec, tvec;
-        cv::solvePnP(zed_cali, radar_cali, Data::camera[i]->intrinsic_matrix, Data::camera[i]->distortion_coeffs, rvec, tvec, 0, 1);
+        cv::solvePnP(zed_cali, radar_cali, Data::camera[i]->intrinsic_matrix, Data::camera[i]->distortion_coeffs, rvec, tvec, 0, cv::SOLVEPNP_ITERATIVE);
 
         // 4. 将rvec和tvec转换为4x4的矩阵place2camera
         Eigen::Matrix<double, 4, 4> place2camera = Eigen::Matrix<double, 4, 4>::Identity();
@@ -94,9 +94,15 @@ bool extrinsic_calib(){
         rm::tf_rt2trans(pose, rotate, place2camera);
         Data::camera2place.push_back(place2camera.inverse());
 
+        // // 5. 得到radar2place
+        Data::radar2place = place2camera.inverse() * Data::camera[0]->Trans_pnp2head;
     }
-    // // 5. 得到radar2place TODO: 用哪个相机捏? 还是用多个相机的平均值? 还是说直接获得?
-    // Data::radar2place = place2camera.inverse() * Data::camera[0]->Trans_pnp2head;
+
+
+    // 输出tvec 
+    std::cout << "x: " << Data::camera2place[0](0, 3) << " y: " << Data::camera2place[0](1, 3) << " z: " << Data::camera2place[0](2, 3) << std::endl;
+
+    
     return true;
 }
 

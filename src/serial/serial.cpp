@@ -27,7 +27,6 @@ void serial_port_init(){
     else{
         std::cout << "Serial Port failed to initialize" << std::endl;
     }
-
 }
 
 

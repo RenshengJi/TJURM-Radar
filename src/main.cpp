@@ -11,6 +11,8 @@
 int main(int argc, char* argv[]) {
     auto param = Param::get_instance();
 
+    // FIXME: 自启动测试
+
     // 初始化所有设备
     while(true){
         if(init_driver()) break;
@@ -62,17 +64,18 @@ int main(int argc, char* argv[]) {
         // 获取装甲板在场地坐标系下的3D坐标
         for(auto& yolo : *yolo_list){
             
+            // FIXME: 比赛模式
             // 只处理敌方地面车辆   
-            if(yolo.class_id % 9 >= 6)
-                continue;
-            if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
-                if(yolo.class_id / 9 != 0)
-                    continue;
-            }
-            else{
-                if(yolo.class_id / 9 != 1)
-                    continue;
-            }
+            // if(yolo.class_id % 9 >= 6)
+            //     continue;
+            // if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
+            //     if(yolo.class_id / 9 != 0)
+            //         continue;
+            // }
+            // else{
+            //     if(yolo.class_id / 9 != 1)
+            //         continue;
+            // }
             int camera_id = yolo.camera_id;
             std::vector<point> armor_3d_point;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
@@ -109,47 +112,26 @@ int main(int argc, char* argv[]) {
             cv::Point3f armor_3d_mean = dbscan(armor_3d_point, 0.1, 2);
 
 
-            // 将检测到的点绘制到小地图上
-            int scale = 3 * 10;
-            cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/scale, Data::map.rows - armor_3d_mean.y/scale);
-            cv::circle(map, armor_2d, 10, cv::Scalar(0, 0, 255), -1);
-            // 写出类别(class_id)
-            cv::putText(map, std::to_string(yolo.class_id % 9), armor_2d, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+            // 将检测到的点绘制到小地图上 FIXME: exchange
+            // int scale = 10;
+            // cv::Point2f armor_2d = cv::Point2f(armor_3d_mean.x/scale, Data::map.rows - armor_3d_mean.y/scale);
+            int scale = 12.3;
+            cv::Point2f armor_2d = cv::Point2f(Data::map.cols - armor_3d_mean.y/scale, Data::map.rows - armor_3d_mean.x/scale);
 
+
+            
+            // 写出类别(class_id) 注意颜色区分
+            cv::Scalar color = yolo.class_id >= 9 ? cv::Scalar(0, 0, 255) : cv::Scalar(255, 0, 0);
+            cv::circle(map, armor_2d, 30, color, 3);
+            cv::putText(map, std::to_string(yolo.class_id % 9), armor_2d, cv::FONT_HERSHEY_SIMPLEX, 1, color, 5);
+
+
+            // FIXME: 红蓝的问题
             float temp = armor_3d_mean.x;
             armor_3d_mean.x = armor_3d_mean.y/10;
             armor_3d_mean.y = 1500 - temp/10;
 
             Data::enemy_info[yolo.class_id % 9].pos = armor_3d_mean;
-
-            // // 存入map_robot_data
-            // switch (yolo.class_id % 9)
-            // {
-            //     case 0:
-            //         Data::map_robot_data.sentry_position_x = armor_3d_mean.x;
-            //         Data::map_robot_data.sentry_position_y = armor_3d_mean.y;
-            //         break;
-            //     case 1:
-            //         Data::map_robot_data.hero_position_x = armor_3d_mean.x;
-            //         Data::map_robot_data.hero_position_y = armor_3d_mean.y;
-            //         break;
-            //     case 2:
-            //         Data::map_robot_data.engineer_position_x = armor_3d_mean.x;
-            //         Data::map_robot_data.engineer_position_y = armor_3d_mean.y;
-            //         break;
-            //     case 3:
-            //         Data::map_robot_data.infantry_3_position_x = armor_3d_mean.x;
-            //         Data::map_robot_data.infantry_3_position_y = armor_3d_mean.y;
-            //         break;
-            //     case 4:
-            //         Data::map_robot_data.infantry_4_position_x = armor_3d_mean.x;
-            //         Data::map_robot_data.infantry_4_position_y = armor_3d_mean.y;
-            //         break;
-            //     case 5:
-            //         Data::map_robot_data.infantry_5_position_x = armor_3d_mean.x;
-            //         Data::map_robot_data.infantry_5_position_y = armor_3d_mean.y;
-            //         break;
-            // }
         }
 
 
@@ -184,6 +166,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // FIXME: 给裁判系统的发送端
 
 
         // 绘制深度与RGB的叠加图
@@ -194,18 +177,21 @@ int main(int argc, char* argv[]) {
                 for(int j = 0; j < depth_image.cols; j++){
                     double pixel = depth_image.at<double>(i, j);
                     // pixel, 从0到1, 红近蓝远
-                    pixel = pixel < 1 ? 0 : pixel > 30 ? 1 : pixel/30.0;
+                    pixel = pixel < 1 ? 0 : pixel > 18.0 ? 1 : pixel/18.0;
                     if(pixel != 0){
-                        image.at<cv::Vec3b>(i, j) = image.at<cv::Vec3b>(i, j) * 0.5 + cv::Vec3b(255*pixel, 0, 255*(1-pixel)) * 0.5;
+                        image.at<cv::Vec3b>(i, j) = image.at<cv::Vec3b>(i, j) * 0.1 + cv::Vec3b(255*pixel, 0, 255*(1-pixel)) * 0.9;
                     }
                 }
             }
-            // cv::resize(image, image, cv::Size(1280, 960));
-            // cv::imshow("image" + std::to_string(i), image);
+            // FIXME: 去掉imshow
+            cv::resize(image, image, cv::Size(1280, 960));
+            cv::imshow("image" + std::to_string(i), image);
         }
         
-        // cv::imshow("map", map);
-        // cv::waitKey(1);
+        // 将map缩小3倍显示
+        cv::resize(map, map, cv::Size(map.cols/3, map.rows/3)); 
+        cv::imshow("map", map);
+        cv::waitKey(1);
     }
 
     return 0;
