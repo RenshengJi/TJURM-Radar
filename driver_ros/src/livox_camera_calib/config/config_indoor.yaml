@@ -8,14 +8,18 @@ ExtrinsicMat: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
+  data: [0.00251058,-0.999849,0.0172182,0.089227,
+        0.00238542,-0.0172122,-0.999849,0.023462,
+        0.999994,0.00255127,0.00234185,-0.0830576,
+         0.0,    0.0,    0.0,    1.0]
   # data: [0.0,   -1,   0.0,    -0.03,
   #        -0.225,  0.0,  -0.974,    -0.05,
   #        0.974,   0.0,    -0.225,    0.0,
   #        0.0,   0.0,    0.0,    1.0]
-  data: [0.011338,-0.999795,-0.0167884,-0.0483114,
-         -0.224548,0.0138149,-0.974365,-0.00763264,
-         0.974397,0.0148172,-0.224346,-0.110108,
-         0.0,0.0,0.0,1.0]
+  # data: [0.011338,-0.999795,-0.0167884,-0.0483114,
+  #        -0.224548,0.0138149,-0.974365,-0.00763264,
+  #        0.974397,0.0148172,-0.224346,-0.110108,
+  #        0.0,0.0,0.0,1.0]
   # data: [-0.08716,   -0.9962,   0.0,    -0.05,
   #        0.0,  0.0,  -1.0,    -0.02,
   #        0.9962,   -0.08716,    0.0,    -0.05,
@@ -26,13 +30,13 @@ ExtrinsicMat: !!opencv-matrix
   #         0,0,0,1.0]
 # Params for Canny Edge Extraction
 
-Canny.gray_threshold: 70
-Canny.len_threshold: 700
+Canny.gray_threshold: 130
+Canny.len_threshold: 600
 
 # Params for Voxel Cutting & Plane Fitting & Edge Extraction
 # Voxel.size: 0.5
 # Voxel.down_sample_size: 0.02
-# Plane.min_points_size: 30
+# Plane.min_points_size: 45
 # Plane.normal_theta_min: 45
 # Plane.normal_theta_max: 135
 # Plane.max_size: 8

@@ -123,6 +123,19 @@ void send_map(){
     packet.header.data_length = 24;
     packet.header.seq = 0;
     append_crc8_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet.header));
+    // 循环Data::enemy_info，将信息写入Data::map_robot_data
+    Data::map_robot_data.sentry_position_x = Data::enemy_info[0].pos.x;
+    Data::map_robot_data.sentry_position_y = Data::enemy_info[0].pos.y;
+    Data::map_robot_data.hero_position_x = Data::enemy_info[1].pos.x;
+    Data::map_robot_data.hero_position_y = Data::enemy_info[1].pos.y;
+    Data::map_robot_data.engineer_position_x = Data::enemy_info[2].pos.x;
+    Data::map_robot_data.engineer_position_y = Data::enemy_info[2].pos.y;
+    Data::map_robot_data.infantry_3_position_x = Data::enemy_info[3].pos.x;
+    Data::map_robot_data.infantry_3_position_y = Data::enemy_info[3].pos.y;
+    Data::map_robot_data.infantry_4_position_x = Data::enemy_info[4].pos.x;
+    Data::map_robot_data.infantry_4_position_y = Data::enemy_info[4].pos.y;
+    Data::map_robot_data.infantry_5_position_x = Data::enemy_info[5].pos.x;
+    Data::map_robot_data.infantry_5_position_y = Data::enemy_info[5].pos.y;
     memcpy(&packet.data, &Data::map_robot_data, sizeof(map_robot_data_t));
     append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
     Data::ser.write((uint8_t *)&packet, sizeof(packet));

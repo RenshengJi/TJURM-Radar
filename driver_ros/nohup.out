@@ -1,0 +1,30 @@
+... logging to /home/tjurm/.ros/log/d1cb541e-4b45-11ef-b08a-986ee82e470c/roslaunch-tjurm-ThinkStation-P330-3692.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;roscore
+[1mstarted roslaunch server http://tjurm-ThinkStation-P330:44915/[0m
+ros_comm version 1.14.13
+
+
+SUMMARY
+========
+
+PARAMETERS
+ * /rosdistro: melodic
+ * /rosversion: 1.14.13
+
+NODES
+
+auto-starting new master
+[1mprocess[master]: started with pid [3724][0m
+[1mROS_MASTER_URI=http://tjurm-ThinkStation-P330:11311/[0m
+]2;roscore http://tjurm-ThinkStation-P330:11311/
+[1msetting /run_id to d1cb541e-4b45-11ef-b08a-986ee82e470c[0m
+[1mprocess[rosout-1]: started with pid [3735][0m
+started core service [/rosout]
+[rosout-1] killing on exit
+[master] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
