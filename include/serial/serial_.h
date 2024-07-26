@@ -12,8 +12,8 @@ void serial_port_recv();
 void serial_port_send();
 void data_process(uint8_t* data, int size);
 void send_map();
-void send_info();
 void send_cmd();
+void send_sentry();
 
 
 // 以下是一大堆包的结构体

@@ -93,8 +93,8 @@ void serial_port_send(){
     while(true){
         // 睡眠200ms
         usleep(200000);
-        send_info();
         send_map();
+        send_sentry();
     }
 
 }
@@ -110,6 +110,32 @@ void send_cmd(){
     robot_interaction_data.receiver_id = 0x8080;
     robot_interaction_data.data_cmd_id = 0x0121;
     robot_interaction_data.user_data = Data::radar_cmd;
+    memcpy(&packet.data, &robot_interaction_data, sizeof(robot_interaction_data_t));
+    append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
+    Data::ser.write((uint8_t *)&packet, sizeof(packet));
+    memset(&Data::robot_interaction_data, 0, sizeof(robot_interaction_data_t));
+}
+
+void send_sentry(){
+    packet_robot_interaction_data_t packet;
+    packet.header.SOF = 0xA5;
+    packet.header.data_length = 7;
+    packet.header.seq = 0;
+    append_crc8_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet.header));
+    robot_interaction_data_t robot_interaction_data;
+    robot_interaction_data.sender_id = Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED? 9 : 109;
+    robot_interaction_data.receiver_id = Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED? 7 : 107;
+    robot_interaction_data.data_cmd_id = 0x0200;
+    if(Data::map_robot_data.hero_position_x != 0 && Data::map_robot_data.hero_position_y != 0){
+        int is_hero_base;
+        if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED)
+            is_hero_base = Data::map_robot_data.hero_position_x <= 850;
+        else
+            is_hero_base = Data::map_robot_data.hero_position_x >= 2000;
+        robot_interaction_data.user_data.radar_cmd = is_hero_base? 0x01 : 0x00;
+    }
+    else
+        robot_interaction_data.user_data.radar_cmd = 0x00;
     memcpy(&packet.data, &robot_interaction_data, sizeof(robot_interaction_data_t));
     append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
     Data::ser.write((uint8_t *)&packet, sizeof(packet));
@@ -140,18 +166,6 @@ void send_map(){
     append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
     Data::ser.write((uint8_t *)&packet, sizeof(packet));
     memset(&Data::map_robot_data, 0, sizeof(map_robot_data_t));
-}
-
-
-void send_info(){
-    radar_info_msgs packet;
-    packet.header.SOF = 0xA5;
-    packet.header.data_length = 1;
-    packet.header.seq = 0;
-    append_crc8_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet.header));
-    memcpy(&packet.data, &Data::radar_cmd, sizeof(radar_cmd_t));
-    append_crc16_check_sum((uint8_t *)&packet.header.SOF, sizeof(packet));
-    Data::ser.write((uint8_t *)&packet, sizeof(packet));
 }
 
 
