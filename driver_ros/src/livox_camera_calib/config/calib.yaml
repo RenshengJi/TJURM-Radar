@@ -1,29 +1,29 @@
 # Data path. adjust them!
 common:
-    image_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/image/hik.bmp"
-    pcd_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/hik.pcd"
+    image_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/image/far.png"
+    pcd_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/pcd/far.pcd"
     result_file: "/home/tjurm/Code/TJURM-Radar/driver_ros/src/livox_camera_calib/result/extrinsic.txt"
 
 # Camera Parameters. Adjust them!
 camera:
-    camera_matrix: [
-                4.64815924e+03,
-                0,
-                2.06830014e+03,
-                0,
-                4.64989316e+03,
-                1.22273070e+03,
-                0,
-                0,
-                1.0000
-            ]
-    dist_coeffs: [
-                -1.91884791e-01,
-                1.13838789e-01,
-                -2.70262719e-05,
-                7.86028217e-04,
-                3.29831618e-02
-            ]
+    # camera_matrix: [
+    #             4.64815924e+03,
+    #             0,
+    #             2.06830014e+03,
+    #             0,
+    #             4.64989316e+03,
+    #             1.22273070e+03,
+    #             0,
+    #             0,
+    #             1.0000
+    #         ]
+    # dist_coeffs: [
+    #             -1.91884791e-01,
+    #             1.13838789e-01,
+    #             -2.70262719e-05,
+    #             7.86028217e-04,
+    #             3.29831618e-02
+    #         ]
     # camera_matrix: [
     #             1.85586430e+03,
     #             0,
@@ -40,22 +40,22 @@ camera:
     #             0.00080002,
     #             -0.00095754,
     #             0.07697566]
-    # camera_matrix: [
-    #             1.03982137e+04,
-    #             0,
-    #             1.98947054e+03,
-    #             0,
-    #             1.03922491e+04,
-    #             1.19259914e+03,
-    #             0,
-    #             0,
-    #             1.0000
-    #         ]
-    # dist_coeffs: [-2.57520435e-01,
-    #             -1.11535093e+00,
-    #             1.40156413e-03,
-    #             -4.19930663e-04,
-    #             2.27832120e+00]
+    camera_matrix: [
+                1.03982137e+04,
+                0,
+                1.98947054e+03,
+                0,
+                1.03922491e+04,
+                1.19259914e+03,
+                0,
+                0,
+                1.0000
+            ]
+    dist_coeffs: [-2.57520435e-01,
+                -1.11535093e+00,
+                1.40156413e-03,
+                -4.19930663e-04,
+                2.27832120e+00]
 
 # Calibration Parameters.!
 calib:

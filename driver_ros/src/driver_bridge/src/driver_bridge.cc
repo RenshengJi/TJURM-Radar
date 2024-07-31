@@ -111,7 +111,7 @@ int main(int agrc, char *argv[]){
     std::string far_buffer_name =  (*param)["Camera"]["Hik"]["Name"];
     far_buffer = (void *)rm::__shm_alloc__(rm::__gen_hash_key__(far_buffer_name), height_far * width_far * 3);
     memset(far_buffer, 0, height_far * width_far * 3);
-    ros::Subscriber far_image_sub = nh.subscribe<sensor_msgs::Image>("/hikrobot_camera/rgb",1,far_image_callback);
+    ros::Subscriber far_image_sub = nh.subscribe<sensor_msgs::Image>("/hikrobot_camera/rgb",4,far_image_callback);
 
 
     // radar

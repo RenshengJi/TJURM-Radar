@@ -4,8 +4,8 @@ height: 2460            #图像高度
 Offset_x: 0             #X方向偏置
 Offset_y: 0             #Y方向偏置
 
-FrameRateEnable: false   #使能 
-FrameRate: 36           #帧率
+FrameRateEnable: true   #使能 
+FrameRate: 30           #帧率
 
 ExposureTime: 5000     #曝光时间
 

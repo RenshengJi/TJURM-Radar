@@ -176,8 +176,9 @@ void data_process(uint8_t* data, int size){
     // 根据cmd_id确定包的类型
     // 比赛状态数据
     if(data[5] == 0x01 && data[6] == 0x00){
-        game_status_t game_status;
-        memcpy(&game_status, data + 7, sizeof(game_status_t));
+        memcpy(&Data::game_status, data + 7, sizeof(game_status_t));
+        // std::cout << "stage_remain_time:" << int(Data::game_status.stage_remain_time) << std::endl;
+        // std::cout << "game_progress:" << int(Data::game_status.game_progress) << std::endl;
     }
     // 机器人性能体系数据(可以拿到本机器人ID，进而得到红蓝方信息)
     else if(data[5] == 0x01 && data[6] == 0x02){
@@ -209,6 +210,8 @@ void data_process(uint8_t* data, int size){
     // 雷达自主决策信息同步
     else if(data[5] == 0x0E && data[6] == 0x02){
         memcpy(&Data::radar_info, data + 7, sizeof(radar_info_t));
+        // std::cout << "is_douing: " << int(Data::radar_info.is_double_ing) << std::endl;
+        // std::cout << "is_have_chance: " << int(Data::radar_info.is_have_chance) << std::endl;
     }
     // 机器人血量数据
     else if(data[5] == 0x03 && data[6] == 0x00){

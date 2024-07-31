@@ -7,6 +7,12 @@
 #include <cstdint>
 #include <serial/serial.h>
 #include "serial/serial_.h"
+// pcl库
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/octree/octree_search.h>
 
 
 // 存储地敌方车辆信息 0哨兵 1-5同车辆贴纸数字
@@ -17,6 +23,9 @@ struct Car {
 };
 
 namespace Data {
+    // time 
+    extern game_status_t game_status;
+
     // 颜色
     extern rm::ArmorColor self_color;
     extern rm::ArmorColor enemy_color;
@@ -55,6 +64,11 @@ namespace Data {
 
     // 小地图map
     extern cv::Mat map;
+
+    // KD树+八叉树
+    extern pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    // extern pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> octree;
+
 }
 
 bool init_driver();

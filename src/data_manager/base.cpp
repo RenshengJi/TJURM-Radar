@@ -1,5 +1,6 @@
 #include "data_manager/base.h"
 
+
 // 颜色
 rm::ArmorColor Data::self_color;
 rm::ArmorColor Data::enemy_color;
@@ -9,6 +10,7 @@ radar_mark_data_t Data::radar_mark_data;
 radar_info_t Data::radar_info;
 robot_interaction_data_t Data::robot_interaction_data;
 game_robot_HP_t Data::game_robot_HP;
+game_status_t Data::game_status;
 
 // 雷达标记数据
 map_robot_data_t Data::map_robot_data;
@@ -35,6 +37,10 @@ serial::Serial Data::ser;
 
 // 小地图map
 cv::Mat Data::map;
+
+// KD树
+pcl::KdTreeFLANN<pcl::PointXYZ> Data::kdtree;
+// pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> Data::octree;
 
 
 

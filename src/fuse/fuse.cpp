@@ -4,15 +4,11 @@
 #include <openrm/cudatools.h>
 #include <unistd.h>
 
-// pcl库
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-
 
 cv::Mat PointCloud2Depth(rm::Radar* radar, rm::Camera* camera){
-    cv::Mat close_image = cv::Mat(camera->height, camera->width, CV_8UC3, camera->image_buffer);
+    cv::Mat close_image = cv::Mat(camera->height, camera->width, CV_8UC3, camera->image);
     cv::Mat radar_image = cv::Mat(4, radar->num_point, CV_32FC1, radar->point_cloud_buffer);
+    // FIXME: 注意这里拿到的点云单位是m
 
     // 1. 为了方便，先将点云数据转换Matrix格式
     Eigen::Matrix<double, 4, Eigen::Dynamic> radar_matrix = Eigen::Matrix<double, 4, Eigen::Dynamic>::Zero(4, radar->num_point);
@@ -23,10 +19,10 @@ cv::Mat PointCloud2Depth(rm::Radar* radar, rm::Camera* camera){
         radar_matrix(3, i) = 1;
     }
 
-    // 2. 将点云经过close_camera的外参转换到close_camera坐标系下
+    // 2. 将点云经过camera的联合标定参数转换到camera坐标系下
     Eigen::Matrix<double, 4, Eigen::Dynamic> radar_matrix_in_close = camera->Trans_pnp2head * radar_matrix;
 
-    // 3. 将点云投影到close_camera的图像坐标系下
+    // 3. 将点云投影到camera的图像坐标系下
     Eigen::Matrix<double, 3, 3> intrinsic_matrix;
     rm::tf_Mat3d(camera->intrinsic_matrix, intrinsic_matrix);
     Eigen::Matrix<double, 3, Eigen::Dynamic> radar_matrix_in_close_3d = intrinsic_matrix * radar_matrix_in_close.topRows(3);
@@ -107,13 +103,17 @@ bool extrinsic_calib(){
 }
 
 
-
 void init_depth(){
     // 读取pcl文件，拿到PointCloud格式的点云数据
     auto param = Param::get_instance();
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     std::string pcd_path = (*param)["PointCloud"]["Dir"];
     pcl::io::loadPCDFile(pcd_path, *cloud);
+    // FIXME: 注意这里拿到的点云单位是mm
+
+    // TODO: 将cloud存储为KD树以及八叉树
+    Data::kdtree.setInputCloud(cloud);
+    // Data::octree.setInputCloud(cloud);
 
 
     // 根据雷达站和场地的外参以及雷达站和对应相机的外参，将点云转换到相机坐标系下

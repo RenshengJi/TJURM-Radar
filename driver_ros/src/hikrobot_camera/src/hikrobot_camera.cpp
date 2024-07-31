@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     cv_ptr->encoding = sensor_msgs::image_encodings::BGR8;  // 就是rgb格式 
     
     //********** 10 Hz        **********/
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(30);
 
     while (ros::ok())
     {

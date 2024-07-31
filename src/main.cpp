@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
         if(extrinsic_calib()) break;
     }
 
-    // 初始化深度图(需要外参支持)
+    // 初始化深度图(需要外参支持), KD树
     init_depth();
 
     // 主循环
@@ -52,10 +52,12 @@ int main(int argc, char* argv[]) {
         }
 
         // // 激光雷达与RGB相机信息融合
-        // TODO: 联合标定
         // for(int i = 0; i < Data::camera.size(); i++){
         //     Data::radar_depth[i] = PointCloud2Depth(Data::radar, Data::camera[i]);
         // }
+
+        // cv::resize(Data::radar_depth[0], Data::radar_depth[0], cv::Size(1280, 960));
+        // cv::imshow("depth", Data::radar_depth[0]);
 
         cv::Mat map = Data::map.clone();
 
@@ -69,25 +71,24 @@ int main(int argc, char* argv[]) {
             
             // FIXME: 比赛模式
             // 只处理敌方地面车辆   
-            // if(yolo.class_id % 9 >= 6)
-            //     continue;
-            // if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
-            //     if(yolo.class_id / 9 != 0)
-            //         continue;
-            // }
-            // else{
-            //     if(yolo.class_id / 9 != 1)
-            //         continue;
-            // }
+            if(yolo.class_id % 9 >= 6)
+                continue;
+            if(Data::self_color == rm::ArmorColor::ARMOR_COLOR_RED){
+                if(yolo.class_id / 9 != 0)
+                    continue;
+            }
+            else{
+                if(yolo.class_id / 9 != 1)
+                    continue;
+            }
             int camera_id = yolo.camera_id;
             std::vector<point> armor_3d_point;
             // 遍历当前矩形框(yolo)内所有点，计算出装甲板在场地坐标系下的坐标
             int x = yolo.box.x, y = yolo.box.y, w = yolo.box.width, h = yolo.box.height;
             
+             // 方法一: 单目法深度获取
             for(int i = x; i < x + w; i++){
                 for(int j = y; j < y + h; j++){
-
-                    // 方法一: 单目法深度获取
                     if(Data::depth[camera_id].at<double>(j, i) != 0){
                         // std::cout <<  Data::depth[camera_id].at<double>(j, i) << " ";
                         // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
@@ -105,14 +106,50 @@ int main(int argc, char* argv[]) {
                         p.depth = z/1000;
                         armor_3d_point.push_back(p);
                     }
-                    // TODO: 方法二:动态点云深度获取
                 }
             }
+
+            // // TODO: 方法二:动态点云深度获取(适当扩大范围)
+            // for(int i = x; i < x + w; i++){
+            //     for(int j = y; j < y + h; j++){
+            //         if(Data::radar_depth[camera_id].at<double>(j, i) != 0){
+            //             // std::cout <<  Data::depth[camera_id].at<double>(j, i) << " ";
+            //             // 1. 计算该点在相机坐标系下的坐标（利用当前像素坐标，深度信息，以及内参矩阵）
+            //             double z = Data::radar_depth[camera_id].at<double>(j, i) * 1000;
+            //             cv::Mat point_pixel = (cv::Mat_<double>(3, 1) << i*z, j*z, z);
+            //             cv::Mat camera_cor_mat = Data::camera[camera_id]->intrinsic_matrix.inv() * point_pixel;
+            //             Eigen::Vector4d camera_cor(camera_cor_mat.at<double>(0), camera_cor_mat.at<double>(1), camera_cor_mat.at<double>(2), 1);
+
+            //             // 2. 计算该点在场地坐标系下的坐标（利用相机坐标系下的坐标，以及外参矩阵）
+            //             Eigen::Vector4d world_cor = Data::camera2place[camera_id] * camera_cor;
+
+            //             // 3. 利用KD树找到最近的点（Data::kdtree)
+            //             pcl::PointXYZ searchPoint;
+            //             searchPoint.x = world_cor(0);
+            //             searchPoint.y = world_cor(1);
+            //             searchPoint.z = world_cor(2);
+            //             std::vector<int> pointIdxNKNSearch(1);
+            //             std::vector<float> pointNKNSquaredDistance(1);
+            //             if(Data::kdtree.nearestKSearch(searchPoint, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0){
+            //                 if(pointNKNSquaredDistance[0] > 100){
+            //                     cv::Point3f armor_3d = cv::Point3f(Data::radar->cloud->points[pointIdxNKNSearch[0]].x, Data::radar->cloud->points[pointIdxNKNSearch[0]].y, Data::radar->cloud->points[pointIdxNKNSearch[0]].z);
+            //                     point p;
+            //                     p.pos = armor_3d;
+            //                     p.depth = z/1000;
+            //                     armor_3d_point.push_back(p);
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
             if(armor_3d_point.size() == 0)
                 continue;
 
             cv::Point3f armor_3d_mean = dbscan(armor_3d_point, 0.1, 2);
+
+            if(armor_3d_mean.z >= 1100)
+                continue;
 
 
             // 将检测到的点绘制到小地图上 
@@ -156,18 +193,24 @@ int main(int argc, char* argv[]) {
                     }
                     // 如果已经触发一次，那看看时间有没有超过30s(因为一次双倍易伤持续时间为30s)
                     else if(Data::radar_cmd.radar_cmd == 1){
-                        if((clock() - time) / CLOCKS_PER_SEC > 30){
-                            Data::radar_cmd.radar_cmd = 2;
-                            send_cmd();
-                            break;
+                        if(Data::game_status.game_progress == 4 && Data::game_status.stage_remain_time <= 150){
+                            if((clock() - time) / CLOCKS_PER_SEC > 30){
+                                std::cout << "double debuff 2!" << std::endl;
+                                Data::radar_cmd.radar_cmd = 2;
+                                send_cmd();
+                                break;
+                            }
                         }
                     }
                     // 如果还没有触发过双倍易伤，则触发，同时记录当前时间
                     else{
-                        Data::radar_cmd.radar_cmd = 1;
-                        send_cmd();
-                        time = clock();
-                        break;
+                        if(Data::game_status.game_progress == 4 && Data::game_status.stage_remain_time <= 270){
+                            std::cout << "double debuff 1!" << std::endl;
+                            Data::radar_cmd.radar_cmd = 1;
+                            send_cmd();
+                            time = clock();
+                            break;
+                        }
                     }
                 }
             }
