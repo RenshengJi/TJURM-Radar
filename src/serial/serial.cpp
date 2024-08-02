@@ -94,6 +94,7 @@ void serial_port_send(){
         // 睡眠200ms
         usleep(200000);
         send_map();
+        send_cmd();
         send_sentry();
     }
 

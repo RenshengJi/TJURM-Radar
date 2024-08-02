@@ -28,13 +28,13 @@ cv::Mat PointCloud2Depth(rm::Radar* radar, rm::Camera* camera){
     Eigen::Matrix<double, 3, Eigen::Dynamic> radar_matrix_in_close_3d = intrinsic_matrix * radar_matrix_in_close.topRows(3);
 
     // 4. 将点云投影到图像坐标系下，得到深度图
-    cv::Mat depth_image = cv::Mat::zeros(camera->height, camera->width, CV_32FC1);
+    cv::Mat depth_image = cv::Mat::zeros(camera->height, camera->width, CV_64FC1);
     for(int i = 0; i < radar->num_point; i++){
         int x = radar_matrix_in_close_3d(0, i) / radar_matrix_in_close_3d(2, i);
         int y = radar_matrix_in_close_3d(1, i) / radar_matrix_in_close_3d(2, i);
         if(x >= 0 && x < camera->width && y >= 0 && y < camera->height){
-            float depth = radar_matrix_in_close_3d(2, i);
-            depth_image.at<float>(y, x) = depth;
+            double depth = radar_matrix_in_close_3d(2, i);
+            depth_image.at<double>(y, x) = depth;
         }
     }
     return depth_image;
@@ -106,23 +106,23 @@ bool extrinsic_calib(){
 void init_depth(){
     // 读取pcl文件，拿到PointCloud格式的点云数据
     auto param = Param::get_instance();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);、
+    Data::cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
     std::string pcd_path = (*param)["PointCloud"]["Dir"];
-    pcl::io::loadPCDFile(pcd_path, *cloud);
+    pcl::io::loadPCDFile(pcd_path, *Data::cloud);
     // FIXME: 注意这里拿到的点云单位是mm
 
-    // TODO: 将cloud存储为KD树以及八叉树
-    Data::kdtree.setInputCloud(cloud);
-    // Data::octree.setInputCloud(cloud);
+    // 将cloud存储为KD树
+    Data::kdtree.setInputCloud(Data::cloud);
 
 
     // 根据雷达站和场地的外参以及雷达站和对应相机的外参，将点云转换到相机坐标系下
     // 1. 先将点云数据转换为Matrix格式
-    Eigen::Matrix<double, 4, Eigen::Dynamic> cloud_matrix = Eigen::Matrix<double, 4, Eigen::Dynamic>::Zero(4, cloud->width);
-    for(int i = 0; i < cloud->width; i++){
-        cloud_matrix(0, i) = cloud->points[i].x;
-        cloud_matrix(1, i) = cloud->points[i].y;
-        cloud_matrix(2, i) = cloud->points[i].z;
+    Eigen::Matrix<double, 4, Eigen::Dynamic> cloud_matrix = Eigen::Matrix<double, 4, Eigen::Dynamic>::Zero(4, Data::cloud->width);
+    for(int i = 0; i < Data::cloud->width; i++){
+        cloud_matrix(0, i) = Data::cloud->points[i].x;
+        cloud_matrix(1, i) = Data::cloud->points[i].y;
+        cloud_matrix(2, i) = Data::cloud->points[i].z;
         cloud_matrix(3, i) = 1;
     }
 
@@ -137,7 +137,7 @@ void init_depth(){
 
         // 3. 将点云投影到图像坐标系下，得到深度图  FIXME: 采样bug,在后面解决了,但理论上在前面解决更好一点
         cv::Mat depth_image = cv::Mat::zeros(Data::camera[i]->height, Data::camera[i]->width, CV_64FC1);
-        for(int j = 0; j < cloud->width; j++){
+        for(int j = 0; j < Data::cloud->width; j++){
             int x = cloud_matrix_in_camera_3d(0, j) / cloud_matrix_in_camera_3d(2, j);
             int y = cloud_matrix_in_camera_3d(1, j) / cloud_matrix_in_camera_3d(2, j);
             if(x >= 0 && x < Data::camera[i]->width && y >= 0 && y < Data::camera[i]->height){

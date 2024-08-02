@@ -66,6 +66,7 @@ namespace Data {
     extern cv::Mat map;
 
     // KD树+八叉树
+    extern pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
     extern pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
     // extern pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> octree;
 

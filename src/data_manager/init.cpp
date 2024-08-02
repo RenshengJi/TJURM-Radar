@@ -38,7 +38,7 @@ bool init_driver() {
 
     // radar_depth
     for(int i = 0; i < Data::camera.size(); i++){
-        Data::radar_depth.push_back(cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_32FC1));
+        Data::radar_depth.push_back(cv::Mat(Data::camera[i]->height, Data::camera[i]->width, CV_64FC1));
     }
 
     // extrinsic

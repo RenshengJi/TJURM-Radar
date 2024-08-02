@@ -39,7 +39,9 @@ serial::Serial Data::ser;
 cv::Mat Data::map;
 
 // KD树
+pcl::PointCloud<pcl::PointXYZ>::Ptr Data::cloud;
 pcl::KdTreeFLANN<pcl::PointXYZ> Data::kdtree;
+// TODO: 八叉树
 // pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> Data::octree;
 
 
